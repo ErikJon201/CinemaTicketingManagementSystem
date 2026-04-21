@@ -128,4 +128,10 @@ This project is for **academic purposes only**.
 
 ## 💡 Notes
 > This system is a simulation of a real-world cinema ticketing process and is designed to demonstrate clean code structure and proper application of OOP principles.
-> 
+
+##  Class Diagram
+<img width="1072" height="755" alt="Class Diagram" src="https://github.com/user-attachments/assets/6979e508-1ec1-4719-9e5f-8c90a4d1b316" />
+
+## Use-Case Diagram
+<img width="1100" height="645" alt="OOP2_UseCase (1)" src="https://github.com/user-attachments/assets/c4b97af6-e4f7-41ff-be34-6d6ecce20a54" />
+
