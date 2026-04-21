@@ -127,5 +127,5 @@ This project is for **academic purposes only**.
 ---
 
 ## 💡 Notes
-> This system is a simulation of a real-world cinema ticketing process and is designed to demonstrate clean code structure and proper application of OOP principles. (commit test)
+> This system is a simulation of a real-world cinema ticketing process and is designed to demonstrate clean code structure and proper application of OOP principles.
 > 
