@@ -20,8 +20,9 @@ This project demonstrates key OOP principles such as encapsulation, inheritance,
 ## 👥 User Roles
 
 ### 🔑 Admin
+- Login/Logout
 - Full system access
-- Manage movies (add, update, delete)
+- Manage movies (create, read, update, delete)
 - Manage showtimes and theater rooms
 - Manage users
 - View sales reports
