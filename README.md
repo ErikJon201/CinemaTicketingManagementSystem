@@ -118,7 +118,10 @@ This project is developed within a **1-month timeframe**, following structured p
 - Online booking system for customers
 - Mobile or web-based interface
 - Advanced reporting and analytics
-- Integration with payment gateways
+- Integration with real payment gateways (e.g., GCash, PayPal, credit/debit cards)
+- Support for digital wallets and QR-based payments
+- Self-service kiosks for ticket purchasing inside cinemas
+- Role expansion (e.g., Manager, Supervisor)
 
 ---
 
