@@ -16,6 +16,7 @@ public class Cashier extends User {
         System.out.println("6. Logout");
     }
 
+    //Bug checkpoint: Cashier-specific methods
     public void searchMovies(String title) {
         System.out.println("Searching for: " + title);
     }
