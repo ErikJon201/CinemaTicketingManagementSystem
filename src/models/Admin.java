@@ -18,6 +18,7 @@ public class Admin extends Cashier {
         System.out.println("7. Logout");
     }
 
+    //Bug checkpoint: Admin-specific methods
     public void manageMovies() {
         System.out.println("Managing movies...");
     }
