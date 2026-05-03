@@ -41,9 +41,15 @@ public class CashierDashboard {
             btn.setMaxWidth(280);
         }
 
-        searchMoviesBtn.setOnAction(e -> System.out.println("DO: Search Movies"));
+        searchMoviesBtn.setOnAction(e -> {
+            SearchMovieScreen searchScreen = new SearchMovieScreen(stage, cashier);
+            stage.setScene(searchScreen.getScene());
+        });
         selectSeatsBtn.setOnAction(e -> System.out.println("DO: Select Seats"));
-        sellTicketBtn.setOnAction(e -> System.out.println("DO: Sell Ticket"));
+        sellTicketBtn.setOnAction(e -> {
+            MovieSelectionScreen movieSelection = new MovieSelectionScreen(stage, cashier);
+            stage.setScene(movieSelection.getScene());
+        });
         processPaymentBtn.setOnAction(e -> System.out.println("DO: Process Payment"));
         generateReceiptBtn.setOnAction(e -> System.out.println("DO: Generate Receipt"));
 

@@ -1,61 +1,26 @@
 package models;
-
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Showtime {
-    private String showtimeID;
-    private Date date;
-    private String time; // e.g. "10:00 AM", "2:30 PM"
-    private double ticketPrice;
+    private Movie movie;
+    private String time;
+    private double price;
+    private boolean[][] seats; // true = occupied, false = available
 
-    //Constructors
-    public Showtime() {
-    }
-
-    public Showtime(String showtimeID, Date date, String time, double ticketPrice) {
-        this.showtimeID = showtimeID;
-        this.date = date;
+    public Showtime(Movie movie, String time, double price, int rows, int cols) {
+        this.movie = movie;
         this.time = time;
-        this.ticketPrice = ticketPrice;
+        this.price = price;
+        this.seats = new boolean[rows][cols]; // Default all false (available)
     }
 
-    //Getters 
-    public String getShowtimeID() {
-        return showtimeID;
-    }
+    public Movie getMovie() { return movie; }
+    public String getTime() { return time; }
+    public double getPrice() { return price; }
+    public boolean[][] getSeats() { return seats; }
 
-    public Date getDate() {
-        return date;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public double getTicketPrice() {
-        return ticketPrice;
-    }
-
-    //Setters 
-    public void setShowtimeID(String showtimeID) {
-        this.showtimeID = showtimeID;
-    }
-
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
-    }
-
-    public void setTicketPrice(double ticketPrice) {
-        this.ticketPrice = ticketPrice;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("[%s] %s %s | P%.2f",
-                showtimeID, date, time, ticketPrice);
+    public void bookSeat(int row, int col) {
+        seats[row][col] = true;
     }
 }
