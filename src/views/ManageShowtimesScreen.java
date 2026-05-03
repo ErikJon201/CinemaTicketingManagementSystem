@@ -72,7 +72,7 @@ public class ManageShowtimesScreen {
                 try {
                     double price = Double.parseDouble(priceStr);
                     // Create new showtime with a default 5x8 seating grid
-                    Showtime newST = new Showtime(selectedMovie, time, price, 5, 8);
+                    Showtime newST = new Showtime(selectedMovie, "Room 1", time, price, 5, 8);
                     CinemaManager.getInstance().addShowtime(newST);
 
                     txtTime.clear();

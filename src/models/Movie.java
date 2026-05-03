@@ -1,25 +1,21 @@
 package models;
-
 public class Movie {
     private String title;
     private String genre;
-    private int durationMinutes;
+    private int duration; // in minutes
 
-    public Movie(String title, String genre, int durationMinutes) {
+    public Movie(String title, String genre, int duration) {
         this.title = title;
         this.genre = genre;
-        this.durationMinutes = durationMinutes;
+        this.duration = duration;
     }
 
     public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-
     public String getGenre() { return genre; }
-    public void setGenre(String genre) { this.genre = genre; }
-
-    public int getDurationMinutes() { return durationMinutes; }
-    public void setDurationMinutes(int durationMinutes) { this.durationMinutes = durationMinutes; }
-
+    public int getDuration() { return duration; }
+    public void setTitle(String t) { title = t; }
+    public void setGenre(String g) { genre = g; }
+    public void setDuration(int d) { duration = d; }
     @Override
     public String toString() { return title; }
 }

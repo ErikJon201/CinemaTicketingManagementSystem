@@ -48,7 +48,6 @@ public class CashierDashboard {
         });
 
         logoutBtn.setOnAction(e -> {
-            cashier.logout();
             LoginScreen login = new LoginScreen(stage);
             stage.setScene(login.getScene());
         });

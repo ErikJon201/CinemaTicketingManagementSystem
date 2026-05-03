@@ -1,68 +1,46 @@
 package views;
-
-import controllers.LoginController;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.*;
 import javafx.stage.Stage;
+import models.*;
 
 public class LoginScreen {
-
     private Stage stage;
 
-    public LoginScreen(Stage stage) {
-        this.stage = stage;
-    }
+    public LoginScreen(Stage stage) { this.stage = stage; }
 
     public Scene getScene() {
-        VBox root = new VBox(10);
+        VBox root = new VBox(15);
         root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(40));
+        root.setPadding(new Insets(50));
 
-        Label title = new Label("Cinema Ticketing System");
-        title.setFont(Font.font("Georgia", FontWeight.BOLD, 24));
+        Label title = new Label("CINEMA TICKETING SYSTEM");
+        title.setStyle("-fx-font-size: 24; -fx-font-weight: bold;");
 
-        ToggleGroup roleGroup = new ToggleGroup();
-        ToggleButton adminBtn = new ToggleButton("Admin");
-        ToggleButton cashierBtn = new ToggleButton("Cashier");
-        adminBtn.setToggleGroup(roleGroup);
-        cashierBtn.setToggleGroup(roleGroup);
-        cashierBtn.setSelected(true);
+        ToggleGroup group = new ToggleGroup();
+        RadioButton rbAdmin = new RadioButton("Admin");
+        RadioButton rbCashier = new RadioButton("Cashier");
+        rbAdmin.setToggleGroup(group); rbCashier.setToggleGroup(group);
+        rbCashier.setSelected(true);
 
-        HBox roleBox = new HBox(8, adminBtn, cashierBtn);
-        roleBox.setAlignment(Pos.CENTER);
-
-        TextField usernameField = new TextField();
-        usernameField.setPromptText("Username");
-        usernameField.setMaxWidth(280);
-
-        PasswordField passwordField = new PasswordField();
-        passwordField.setPromptText("Password");
-        passwordField.setMaxWidth(280);
-
-        Label errorLabel = new Label("");
-        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11px;");
-
+        TextField userF = new TextField(); userF.setPromptText("Username");
+        PasswordField passF = new PasswordField(); passF.setPromptText("Password");
         Button loginBtn = new Button("Login");
-        loginBtn.setMaxWidth(280);
-
-        LoginController controller = new LoginController(stage);
 
         loginBtn.setOnAction(e -> {
-            String role = adminBtn.isSelected() ? "Admin" : "Cashier";
-            controller.handleLogin(
-                usernameField.getText().trim(),
-                passwordField.getText().trim(),
-                role,
-                errorLabel
-            );
+            String role = rbAdmin.isSelected() ? "Admin" : "Cashier";
+            User u = UserManager.getInstance().login(userF.getText(), passF.getText(), role);
+            if (u != null) {
+                if (u instanceof Admin) stage.setScene(new AdminDashboard(stage, (Admin)u).getScene());
+                else stage.setScene(new CashierDashboard(stage, (Cashier)u).getScene());
+            } else {
+                new Alert(Alert.AlertType.ERROR, "Invalid Credentials").show();
+            }
         });
 
-        root.getChildren().addAll(title, roleBox, usernameField, passwordField, errorLabel, loginBtn);
-
-        return new Scene(root, 800, 500);
+        root.getChildren().addAll(title, new HBox(10, rbAdmin, rbCashier), userF, passF, loginBtn);
+        return new Scene(root, 400, 400);
     }
 }

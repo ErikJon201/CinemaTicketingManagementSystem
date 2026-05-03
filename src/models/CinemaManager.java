@@ -1,16 +1,19 @@
 package models;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 public class CinemaManager {
     private static CinemaManager instance;
-    // Use ObservableList for automatic UI updates
+
     private ObservableList<Movie> movies = FXCollections.observableArrayList();
     private ObservableList<Showtime> showtimes = FXCollections.observableArrayList();
 
     private CinemaManager() {
-        movies.add(new Movie("Inception", "Sci-Fi", 148));
-        movies.add(new Movie("The Lion King", "Animation", 118));
+        Movie m1 = new Movie("Inception", "Sci-Fi", 148);
+        movies.add(m1);
+
+        showtimes.add(new Showtime(m1, "Cinema 1", "10:00 AM", 350.0, 5, 8));
     }
 
     public static CinemaManager getInstance() {
@@ -18,7 +21,21 @@ public class CinemaManager {
         return instance;
     }
 
-    public ObservableList<Movie> getMovies() { return movies; }
+    public ObservableList<Movie> getMovies() {
+        return movies;
+    }
+
+    public ObservableList<Showtime> getShowtimes() {
+        return showtimes;
+    }
+
+    public void addShowtime(Showtime showtime) {
+        showtimes.add(showtime);
+    }
+
+    public void deleteShowtime(Showtime showtime) {
+        showtimes.remove(showtime);
+    }
 
     public void addMovie(Movie movie) {
         movies.add(movie);
@@ -26,22 +43,5 @@ public class CinemaManager {
 
     public void deleteMovie(Movie movie) {
         movies.remove(movie);
-    }
-
-    public ObservableList<Showtime> getShowtimes() {
-        return showtimes;
-    }
-
-    public void addShowtime(Showtime st) {
-        showtimes.add(st);
-    }
-
-    public void deleteShowtime(Showtime st) {
-        showtimes.remove(st);
-    }
-
-    // Update is handled by modifying the object directly or replacing it
-    public void updateMovie(int index, Movie updatedMovie) {
-        movies.set(index, updatedMovie);
     }
 }

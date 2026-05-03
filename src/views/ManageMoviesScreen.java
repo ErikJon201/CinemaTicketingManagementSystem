@@ -81,7 +81,7 @@ public class ManageMoviesScreen {
             if (newSelection != null) {
                 txtTitle.setText(newSelection.getTitle());
                 txtGenre.setText(newSelection.getGenre());
-                txtDuration.setText(String.valueOf(newSelection.getDurationMinutes()));
+                txtDuration.setText(String.valueOf(newSelection.getDuration()));
             }
         });
 
@@ -91,7 +91,7 @@ public class ManageMoviesScreen {
             if (selected != null) {
                 selected.setTitle(txtTitle.getText());
                 selected.setGenre(txtGenre.getText());
-                selected.setDurationMinutes(Integer.parseInt(txtDuration.getText()));
+                selected.setDuration(Integer.parseInt(txtDuration.getText()));
                 table.refresh(); // Update table display
             }
         });
