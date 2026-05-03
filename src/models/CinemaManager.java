@@ -1,22 +1,16 @@
 package models;
-import java.util.ArrayList;
-import java.util.List;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class CinemaManager {
     private static CinemaManager instance;
-    private List<Movie> movies = new ArrayList<>();
-    private List<Showtime> showtimes = new ArrayList<>();
+    // Use ObservableList for automatic UI updates
+    private ObservableList<Movie> movies = FXCollections.observableArrayList();
+    private ObservableList<Showtime> showtimes = FXCollections.observableArrayList();
 
     private CinemaManager() {
-        // Sample Data
-        Movie m1 = new Movie("Inception", "Sci-Fi", 148);
-        Movie m2 = new Movie("The Lion King", "Animation", 118);
-        movies.add(m1);
-        movies.add(m2);
-
-        showtimes.add(new Showtime(m1, "10:00 AM", 250.0, 5, 8));
-        showtimes.add(new Showtime(m1, "02:00 PM", 250.0, 5, 8));
-        showtimes.add(new Showtime(m2, "11:00 AM", 200.0, 5, 8));
+        movies.add(new Movie("Inception", "Sci-Fi", 148));
+        movies.add(new Movie("The Lion King", "Animation", 118));
     }
 
     public static CinemaManager getInstance() {
@@ -24,6 +18,30 @@ public class CinemaManager {
         return instance;
     }
 
-    public List<Movie> getMovies() { return movies; }
-    public List<Showtime> getShowtimes() { return showtimes; }
+    public ObservableList<Movie> getMovies() { return movies; }
+
+    public void addMovie(Movie movie) {
+        movies.add(movie);
+    }
+
+    public void deleteMovie(Movie movie) {
+        movies.remove(movie);
+    }
+
+    public ObservableList<Showtime> getShowtimes() {
+        return showtimes;
+    }
+
+    public void addShowtime(Showtime st) {
+        showtimes.add(st);
+    }
+
+    public void deleteShowtime(Showtime st) {
+        showtimes.remove(st);
+    }
+
+    // Update is handled by modifying the object directly or replacing it
+    public void updateMovie(int index, Movie updatedMovie) {
+        movies.set(index, updatedMovie);
+    }
 }

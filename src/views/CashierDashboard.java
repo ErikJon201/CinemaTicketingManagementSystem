@@ -30,14 +30,11 @@ public class CashierDashboard {
 
         Separator sep = new Separator();
 
-        Button searchMoviesBtn = new Button("Search Movies & Showtimes");
-        Button selectSeatsBtn = new Button("Select Seats");
-        Button sellTicketBtn = new Button("Sell Ticket");
-        Button processPaymentBtn = new Button("Process Payment");
-        Button generateReceiptBtn = new Button("Generate Receipt");
+        Button searchMoviesBtn = new Button("Search Movies");
+        Button sellTicketBtn = new Button("Buy Ticket");
         Button logoutBtn = new Button("Logout");
 
-        for (Button btn : new Button[]{searchMoviesBtn, selectSeatsBtn, sellTicketBtn, processPaymentBtn, generateReceiptBtn, logoutBtn}) {
+        for (Button btn : new Button[]{searchMoviesBtn, sellTicketBtn, logoutBtn}) {
             btn.setMaxWidth(280);
         }
 
@@ -45,13 +42,10 @@ public class CashierDashboard {
             SearchMovieScreen searchScreen = new SearchMovieScreen(stage, cashier);
             stage.setScene(searchScreen.getScene());
         });
-        selectSeatsBtn.setOnAction(e -> System.out.println("DO: Select Seats"));
         sellTicketBtn.setOnAction(e -> {
             MovieSelectionScreen movieSelection = new MovieSelectionScreen(stage, cashier);
             stage.setScene(movieSelection.getScene());
         });
-        processPaymentBtn.setOnAction(e -> System.out.println("DO: Process Payment"));
-        generateReceiptBtn.setOnAction(e -> System.out.println("DO: Generate Receipt"));
 
         logoutBtn.setOnAction(e -> {
             cashier.logout();
@@ -59,7 +53,7 @@ public class CashierDashboard {
             stage.setScene(login.getScene());
         });
 
-        root.getChildren().addAll(title, role, sep, searchMoviesBtn, selectSeatsBtn, sellTicketBtn, processPaymentBtn, generateReceiptBtn, logoutBtn);
+        root.getChildren().addAll(title, role, sep, searchMoviesBtn, sellTicketBtn, logoutBtn);
 
         return new Scene(root, 800, 500);
     }

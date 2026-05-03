@@ -32,22 +32,24 @@ public class AdminDashboard {
 
         Button manageMoviesBtn = new Button("Manage Movies");
         Button manageShowtimesBtn = new Button("Manage Showtimes");
-        Button manageRoomsBtn = new Button("Manage Theater Rooms");
         Button manageUsersBtn = new Button("Manage Users");
         Button salesReportBtn = new Button("View Sales Report");
-        Button sellTicketBtn = new Button("Sell Ticket (Cashier Mode)");
         Button logoutBtn = new Button("Logout");
 
-        for (Button btn : new Button[]{manageMoviesBtn, manageShowtimesBtn, manageRoomsBtn, manageUsersBtn, salesReportBtn, sellTicketBtn, logoutBtn}) {
+        for (Button btn : new Button[]{manageMoviesBtn, manageShowtimesBtn, manageUsersBtn, salesReportBtn, logoutBtn}) {
             btn.setMaxWidth(280);
         }
 
-        manageMoviesBtn.setOnAction(e -> System.out.println("DO: Manage Movies"));
-        manageShowtimesBtn.setOnAction(e -> System.out.println("DO: Manage Showtimes"));
-        manageRoomsBtn.setOnAction(e -> System.out.println("DO: Manage Theater Rooms"));
+        manageMoviesBtn.setOnAction(e -> {
+            ManageMoviesScreen manageScreen = new ManageMoviesScreen(stage, admin);
+            stage.setScene(manageScreen.getScene());
+        });
+        manageShowtimesBtn.setOnAction(e -> {
+            ManageShowtimesScreen showtimeScreen = new ManageShowtimesScreen(stage, admin);
+            stage.setScene(showtimeScreen.getScene());
+        });
         manageUsersBtn.setOnAction(e -> System.out.println("DO: Manage Users"));
         salesReportBtn.setOnAction(e -> System.out.println("DO: Sales Report"));
-        sellTicketBtn.setOnAction(e -> System.out.println("DO: Sell Ticket"));
 
         logoutBtn.setOnAction(e -> {
             admin.logout();
@@ -57,8 +59,7 @@ public class AdminDashboard {
 
         root.getChildren().addAll(
             title, role, sep,
-            manageMoviesBtn, manageShowtimesBtn, manageRoomsBtn,
-            manageUsersBtn, salesReportBtn, sellTicketBtn, logoutBtn
+            manageMoviesBtn, manageShowtimesBtn, manageUsersBtn, salesReportBtn, logoutBtn
         );
 
         return new Scene(root, 800, 500);
