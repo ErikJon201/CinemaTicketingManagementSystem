@@ -17,6 +17,8 @@ public class Showtime {
 
     public Movie getMovie() { return movie; }
     public String getMovieTitle() { return movie.getTitle(); }
+    public String getMovieGenre() { return movie.getGenre(); }
+    public int getMovieDuration() { return movie.getDuration(); }
     public String getRoomName() { return roomName; }
     public String getTime() { return time; }
     public double getPrice() { return price; }

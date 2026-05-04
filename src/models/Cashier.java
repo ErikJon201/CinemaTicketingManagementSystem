@@ -4,3 +4,4 @@ public class Cashier extends User {
         super(userId, username, password, fullName, "Cashier");
     }
 }
+

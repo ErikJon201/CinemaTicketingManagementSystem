@@ -34,6 +34,8 @@ public class AdminDashboard {
         title.setFont(Font.font("Verdana", FontWeight.BOLD, 28));
         title.setStyle("-fx-text-fill: #2c3e50;");
 
+          
+
         Label welcomeLabel = new Label("Logged in as: " + admin.getFullName() + " (Administrator)");
         welcomeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
         welcomeLabel.setStyle("-fx-text-fill: #7f8c8d;");
@@ -57,6 +59,7 @@ public class AdminDashboard {
         Button logoutBtn = createMenuButton("🚪 Logout", "#e74c3c");
 
         // Add Buttons to Grid
+        
         grid.add(manageMoviesBtn, 0, 0);
         grid.add(manageShowtimesBtn, 1, 0);
         grid.add(manageUsersBtn, 0, 1);

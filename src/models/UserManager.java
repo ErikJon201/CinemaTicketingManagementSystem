@@ -7,8 +7,10 @@ public class UserManager {
     private ObservableList<User> users = FXCollections.observableArrayList();
 
     private UserManager() {
-        users.add(new Admin(1, "admin", "admin123", "System Administrator"));
-        users.add(new Cashier(2, "cashier", "cash123", "John Doe"));
+        // addmin
+        users.add(new Admin(1, "1", "1", "System Administrator"));
+        // cashier
+        users.add(new Cashier(2, "1", "1", "John Doe")); 
     }
 
     public static UserManager getInstance() {
