@@ -124,7 +124,7 @@ public class SearchMovieScreen {
         ListView<Movie> movieListView = new ListView<>(filteredData);
         movieListView.setPrefHeight(160);
         movieListView.setStyle(listStyle());
-        movieListView.setCellFactory(param -> new ListCell<>() {
+        movieListView.setCellFactory(param -> new ListCell<Movie>() {
             @Override
             protected void updateItem(Movie item, boolean empty) {
                 super.updateItem(item, empty);
@@ -149,7 +149,7 @@ public class SearchMovieScreen {
         ListView<String> showtimeListView = new ListView<>();
         showtimeListView.setPrefHeight(160);
         showtimeListView.setStyle(listStyle());
-        showtimeListView.setCellFactory(param -> new ListCell<>() {
+      showtimeListView.setCellFactory(param -> new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);

@@ -11,11 +11,15 @@ public class Main extends Application {
 
         stage.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
-                // Stretch root node to always fill the full scene
-                if (newScene.getRoot() instanceof Region root) {
+
+                // FIX: compatible with all Java versions
+                if (newScene.getRoot() instanceof Region) {
+                    Region root = (Region) newScene.getRoot();
+
                     root.prefWidthProperty().bind(newScene.widthProperty());
                     root.prefHeightProperty().bind(newScene.heightProperty());
                 }
+
                 stage.setFullScreen(true);
             }
         });

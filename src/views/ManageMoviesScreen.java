@@ -92,7 +92,7 @@ public class ManageMoviesScreen {
                 selected.setTitle(txtTitle.getText());
                 selected.setGenre(txtGenre.getText());
                 selected.setDuration(Integer.parseInt(txtDuration.getText()));
-                table.refresh(); // Update table display
+                CinemaManager.getInstance().getMovies().add(selected);// Update table display
             }
         });
 
