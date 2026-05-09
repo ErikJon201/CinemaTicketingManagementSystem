@@ -7,6 +7,8 @@ import javafx.scene.paint.*;
 import javafx.scene.shape.*;
 import javafx.stage.Stage;
 import models.*;
+import models.Ticket;
+import models.Receipt;
 
 public class SeatSelectionScreen {
     private Stage stage;
@@ -137,24 +139,29 @@ public class SeatSelectionScreen {
             "-fx-background-radius: 4; -fx-cursor: hand;"
         ));
 
-        Button backBtn = new Button("← Back");
+        Button backBtn = new Button("← Back to Dashboard");
         backBtn.setMaxWidth(Double.MAX_VALUE);
         backBtn.setPadding(new Insets(10, 0, 10, 0));
         backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560;" +
+            "-fx-background-color: #1e2540;" +
+            "-fx-text-fill: #7a849a;" +
             "-fx-font-size: 12px;" +
+            "-fx-background-radius: 4;" +
             "-fx-cursor: hand;"
         );
         backBtn.setOnMouseEntered(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #7a849a;" +
-            "-fx-font-size: 12px; -fx-cursor: hand;"
+            "-fx-background-color: #2b3250;" +
+            "-fx-text-fill: #eaeaea;" +
+            "-fx-font-size: 12px;" +
+            "-fx-background-radius: 4;" +
+            "-fx-cursor: hand;"
         ));
         backBtn.setOnMouseExited(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560;" +
-            "-fx-font-size: 12px; -fx-cursor: hand;"
+            "-fx-background-color: #1e2540;" +
+            "-fx-text-fill: #7a849a;" +
+            "-fx-font-size: 12px;" +
+            "-fx-background-radius: 4;" +
+            "-fx-cursor: hand;"
         ));
 
         VBox sideBottom = new VBox(6);
@@ -231,32 +238,35 @@ public class SeatSelectionScreen {
 
         // ── Wire up buttons ───────────────────────────────────────────
         buyBtn.setOnAction(e -> {
-            if (total[0] == 0) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("No Seats Selected");
-                alert.setHeaderText(null);
-                alert.setContentText("Please select at least one seat before confirming.");
-                alert.showAndWait();
-                return;
-            }
-            for (int r = 0; r < seats.length; r++) {
-                for (int c = 0; c < seats[r].length; c++) {
-                    int idx = r * seats[0].length + c;
-                    if (selectedState[idx]) {
-                        showtime.bookSeat(r, c);
-                        SalesManager.getInstance().recordSale(
-                            showtime.getMovieTitle(), showtime.getPrice()
-                        );
-                    }
+        if (total[0] == 0) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("No Seats Selected");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select at least one seat before confirming.");
+            alert.showAndWait();
+            return;
+        }
+
+        // Collect booked seat labels and record sales
+        java.util.List<String> bookedSeats = new java.util.ArrayList<>();
+        for (int r = 0; r < seats.length; r++) {
+            for (int c = 0; c < seats[r].length; c++) {
+                int idx = r * seats[0].length + c;
+                if (selectedState[idx]) {
+                    showtime.bookSeat(r, c);
+                    bookedSeats.add((char)('A' + r) + "" + (c + 1));
+                    SalesManager.getInstance().recordSale(
+                        showtime.getMovieTitle(), showtime.getPrice()
+                    );
                 }
             }
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Purchase Confirmed");
-            alert.setHeaderText(null);
-            alert.setContentText("Purchase confirmed!\nTotal paid: PHP " + String.format("%.2f", total[0]));
-            alert.showAndWait();
-            stage.setScene(new CashierDashboard(stage, cashier).getScene());
-        });
+        }
+
+        // Create ticket and receipt, go to ReceiptScreen
+        Ticket ticket = new Ticket(showtime, bookedSeats, total[0], cashier);
+        Receipt receipt = new Receipt(ticket);
+        stage.setScene(new ReceiptScreen(stage, cashier, receipt).getScene());
+    });
 
         backBtn.setOnAction(e -> stage.setScene(new CashierDashboard(stage, cashier).getScene()));
 
