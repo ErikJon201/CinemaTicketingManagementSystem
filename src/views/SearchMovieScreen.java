@@ -149,7 +149,7 @@ public class SearchMovieScreen {
         ListView<String> showtimeListView = new ListView<>();
         showtimeListView.setPrefHeight(160);
         showtimeListView.setStyle(listStyle());
-      showtimeListView.setCellFactory(param -> new ListCell<String>() {
+        showtimeListView.setCellFactory(param -> new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -169,7 +169,7 @@ public class SearchMovieScreen {
             }
         });
 
-        // ── Logic (unchanged) ─────────────────────────────────────────
+        // ── Logic ─────────────────────────────────────────────────────
         movieListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 showtimeListView.getItems().clear();
@@ -178,7 +178,10 @@ public class SearchMovieScreen {
                         showtimeListView.getItems().add("Title: " + st.getMovieTitle());
                         showtimeListView.getItems().add("Genre: " + st.getMovieGenre());
                         showtimeListView.getItems().add("Duration: " + st.getMovieDuration() + " minutes");
-                        showtimeListView.getItems().add(st.getTime() + " - PHP " + st.getPrice());
+                        showtimeListView.getItems().add("Date: " + st.getDate());         // ← ADDED
+                        showtimeListView.getItems().add("Room: " + st.getRoomName());     // ← ADDED
+                        showtimeListView.getItems().add("Time: " + st.getTime() + " - PHP " + st.getPrice());
+                        showtimeListView.getItems().add("─────────────────────");         // ← ADDED: separator between showtimes
                     }
                 }
                 if (showtimeListView.getItems().isEmpty()) {

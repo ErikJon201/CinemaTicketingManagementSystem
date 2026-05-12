@@ -22,23 +22,20 @@ public class CinemaManager {
         Movie m10 = new Movie("The Dark Knight", "Action", 152);
         Movie m11 = new Movie("Inception", "Sci-Fi", 148);
         Movie m12 = new Movie("The Dark Knight", "Action", 152);
-       
 
-        movies.addAll(m1, m2, m3, m4,m5, m6, m7, m8,m9, m10, m11, m12 );
+        movies.addAll(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12);
 
-        showtimes.add(new Showtime(m1, "Cinema 1", "10:00 AM", 350.0, 5, 8));
-        showtimes.add(new Showtime(m2, "Cinema 2", "12:00 PM", 380.0, 5, 8));
-        showtimes.add(new Showtime(m3, "Cinema 3", "02:00 PM", 400.0, 5, 8));
-        showtimes.add(new Showtime(m4, "Cinema 4", "04:00 PM", 420.0, 5, 8));
-        showtimes.add(new Showtime(m5, "Cinema 1", "10:00 AM", 350.0, 5, 8));
-        showtimes.add(new Showtime(m6, "Cinema 2", "12:00 PM", 380.0, 5, 8));
-        showtimes.add(new Showtime(m7, "Cinema 3", "02:00 PM", 400.0, 5, 8));
-        showtimes.add(new Showtime(m8, "Cinema 4", "04:00 PM", 420.0, 5, 8));
-        showtimes.add(new Showtime(m9, "Cinema 1", "10:00 AM", 350.0, 5, 8));
-        showtimes.add(new Showtime(m10, "Cinema 2", "12:00 PM", 380.0, 5, 8));
-        showtimes.add(new Showtime(m11, "Cinema 3", "02:00 PM", 400.0, 5, 8));
-        showtimes.add(new Showtime(m12, "Cinema 4", "04:00 PM", 420.0, 5, 8));
-       
+        showtimes.add(new Showtime(m1,  "Cinema 1", "May 12, 2026", "10:00 AM", 350.0, 5, 8));  
+        showtimes.add(new Showtime(m2,  "Cinema 2", "May 12, 2026", "12:00 PM", 380.0, 5, 8));  
+        showtimes.add(new Showtime(m3,  "Cinema 3", "May 12, 2026", "02:00 PM", 400.0, 5, 8));  
+        showtimes.add(new Showtime(m4,  "Cinema 4", "May 12, 2026", "04:00 PM", 420.0, 5, 8));  
+        showtimes.add(new Showtime(m5,  "Cinema 1", "May 13, 2026", "10:00 AM", 350.0, 5, 8));  
+        showtimes.add(new Showtime(m7,  "Cinema 3", "May 13, 2026", "02:00 PM", 400.0, 5, 8));  
+        showtimes.add(new Showtime(m8,  "Cinema 4", "May 13, 2026", "04:00 PM", 420.0, 5, 8));  
+        showtimes.add(new Showtime(m9,  "Cinema 1", "May 14, 2026", "10:00 AM", 350.0, 5, 8));  
+        showtimes.add(new Showtime(m10, "Cinema 2", "May 14, 2026", "12:00 PM", 380.0, 5, 8));  
+        showtimes.add(new Showtime(m11, "Cinema 3", "May 14, 2026", "02:00 PM", 400.0, 5, 8));  
+        showtimes.add(new Showtime(m12, "Cinema 4", "May 14, 2026", "04:00 PM", 420.0, 5, 8));  
     }
 
     public static CinemaManager getInstance() {
@@ -46,27 +43,11 @@ public class CinemaManager {
         return instance;
     }
 
-    public ObservableList<Movie> getMovies() {
-        return movies;
-    }
+    public ObservableList<Movie> getMovies() { return movies; }
+    public ObservableList<Showtime> getShowtimes() { return showtimes; }
 
-    public ObservableList<Showtime> getShowtimes() {
-        return showtimes;
-    }
-
-    public void addShowtime(Showtime showtime) {
-        showtimes.add(showtime);
-    }
-
-    public void deleteShowtime(Showtime showtime) {
-        showtimes.remove(showtime);
-    }
-
-    public void addMovie(Movie movie) {
-        movies.add(movie);
-    }
-
-    public void deleteMovie(Movie movie) {
-        movies.remove(movie);
-    }
+    public void addShowtime(Showtime showtime) { showtimes.add(showtime); }
+    public void deleteShowtime(Showtime showtime) { showtimes.remove(showtime); }
+    public void addMovie(Movie movie) { movies.add(movie); }
+    public void deleteMovie(Movie movie) { movies.remove(movie); }
 }
