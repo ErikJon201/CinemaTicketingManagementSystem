@@ -87,7 +87,6 @@ public class ManageShowtimesScreen {
                     && !time.isEmpty() && !priceStr.isEmpty()) {
                 try {
                     double price = Double.parseDouble(priceStr);
-
                     Showtime newST = new Showtime(selectedMovie, room, date, time, price, 5, 8);
                     CinemaManager.getInstance().addShowtime(newST);
 
@@ -116,7 +115,7 @@ public class ManageShowtimesScreen {
             }
         });
 
-    
+        // --- UPDATE ---
         updateBtn.setOnAction(e -> {
             Showtime selected = table.getSelectionModel().getSelectedItem();
 
@@ -125,9 +124,9 @@ public class ManageShowtimesScreen {
                 return;
             }
 
-            String room = txtRoom.getText().trim();
-            String date = txtDate.getText().trim();
-            String time = txtTime.getText().trim();
+            String room     = txtRoom.getText().trim();
+            String date     = txtDate.getText().trim();
+            String time     = txtTime.getText().trim();
             String priceStr = txtPrice.getText().trim();
 
             if (room.isEmpty() || date.isEmpty() || time.isEmpty() || priceStr.isEmpty()) {
@@ -137,13 +136,14 @@ public class ManageShowtimesScreen {
 
             try {
                 double price = Double.parseDouble(priceStr);
+                int selectedIndex = table.getSelectionModel().getSelectedIndex(); // ← ADDED
 
                 selected.setRoomName(room);
                 selected.setDate(date);
                 selected.setTime(time);
                 selected.setPrice(price);
 
-                table.refresh();
+                table.getItems().set(selectedIndex, selected); // ← REPLACES table.refresh()
 
             } catch (NumberFormatException ex) {
                 showError("Invalid Price!");
