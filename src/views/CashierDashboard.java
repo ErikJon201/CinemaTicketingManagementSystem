@@ -90,7 +90,7 @@ public class CashierDashboard {
             "-fx-font-size: 14px;"
         );
 
-        Label username = new Label(cashier.getUsername());
+        Label username = new Label(cashier.getFullName());
         username.setStyle(
             "-fx-text-fill: #eaeaea;" +
             "-fx-font-size: 32px;" +

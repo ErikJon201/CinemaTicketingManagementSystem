@@ -1,12 +1,12 @@
 package views;
 
 import models.Admin;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 public class AdminDashboard {
@@ -20,111 +20,206 @@ public class AdminDashboard {
     }
 
     public Scene getScene() {
-        // Main Container
-        VBox root = new VBox(20);
-        root.setPadding(new Insets(40));
-        root.setAlignment(Pos.TOP_CENTER);
-        root.setStyle("-fx-background-color: #f0f2f5;"); // Light grey professional background
 
-        // Header Section
-        VBox header = new VBox(5);
-        header.setAlignment(Pos.CENTER);
+        // ── Root ─────────────────────────────────────────────────────
+        BorderPane root = new BorderPane();
+        root.setStyle("-fx-background-color: #0b0f1a;");
 
-        Label title = new Label("CINEMA ADMINISTRATION");
-        title.setFont(Font.font("Verdana", FontWeight.BOLD, 28));
-        title.setStyle("-fx-text-fill: #2c3e50;");
+        // ── Sidebar ──────────────────────────────────────────────────
+        VBox sidebar = new VBox(0);
+        sidebar.setPrefWidth(240);
+        sidebar.setStyle("-fx-background-color: #161b2e;");
 
-          
+        Rectangle accentBar = new Rectangle(4, 600);
+        accentBar.setFill(Color.web("#c9a84c"));
 
-        Label welcomeLabel = new Label("Logged in as: " + admin.getFullName() + " (Administrator)");
-        welcomeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        welcomeLabel.setStyle("-fx-text-fill: #7f8c8d;");
+        VBox brandBox = new VBox(4);
+        brandBox.setPadding(new Insets(30, 20, 30, 20));
+        brandBox.setStyle("-fx-border-color: transparent transparent #2b3250 transparent; -fx-border-width: 1;");
 
-        header.getChildren().addAll(title, welcomeLabel);
+        Label brand = new Label("🎬  CINETICKET");
+        brand.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 13px; -fx-font-weight: bold;");
+        Label roleTag = new Label("ADMIN PORTAL");
+        roleTag.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
+        brandBox.getChildren().addAll(brand, roleTag);
 
-        Separator sep = new Separator();
-        sep.setPadding(new Insets(10, 0, 10, 0));
+        Button manageMoviesBtn    = navButton("🎥   Manage Movies");
+        Button manageShowtimesBtn = navButton("🕒   Manage Showtimes");
+        Button manageUsersBtn     = navButton("👥   Manage Users");
+        Button salesReportBtn     = navButton("📊   Sales Report");
 
-        // Buttons Grid (Organizing buttons in a clean layout)
-        GridPane grid = new GridPane();
-        grid.setHgap(20);
-        grid.setVgap(20);
-        grid.setAlignment(Pos.CENTER);
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        // Define Buttons
-        Button manageMoviesBtn = createMenuButton("🎬 Manage Movies", "#3498db");
-        Button manageShowtimesBtn = createMenuButton("📅 Manage Showtimes", "#3498db");
-        Button manageUsersBtn = createMenuButton("👥 Manage Users", "#2ecc71");
-        Button salesReportBtn = createMenuButton("📊 Sales Report", "#f1c40f");
-        Button logoutBtn = createMenuButton("🚪 Logout", "#e74c3c");
+        Button logoutBtn = navButton("⎋   Logout");
+        logoutBtn.setStyle(logoutNavStyle());
+        logoutBtn.setOnMouseEntered(e -> logoutBtn.setStyle(logoutNavHoverStyle()));
+        logoutBtn.setOnMouseExited(e  -> logoutBtn.setStyle(logoutNavStyle()));
+        VBox.setMargin(logoutBtn, new Insets(0, 0, 20, 0));
 
-        // Add Buttons to Grid
-        
-        grid.add(manageMoviesBtn, 0, 0);
-        grid.add(manageShowtimesBtn, 1, 0);
-        grid.add(manageUsersBtn, 0, 1);
-        grid.add(salesReportBtn, 1, 1);
-        grid.add(logoutBtn, 0, 2, 2, 1); // Logout spans across two columns
-
-        // --- BUTTON ACTIONS (Linking the screens) ---
-
-        // 1. Manage Movies
-        manageMoviesBtn.setOnAction(e -> {
-            ManageMoviesScreen screen = new ManageMoviesScreen(stage, admin);
-            stage.setScene(screen.getScene());
-        });
-
-        // 2. Manage Showtimes
-        manageShowtimesBtn.setOnAction(e -> {
-            ManageShowtimesScreen screen = new ManageShowtimesScreen(stage, admin);
-            stage.setScene(screen.getScene());
-        });
-
-        // 3. Manage Users
-        manageUsersBtn.setOnAction(e -> {
-            ManageUsersScreen screen = new ManageUsersScreen(stage, admin);
-            stage.setScene(screen.getScene());
-        });
-
-        // 4. View Sales Report
-        salesReportBtn.setOnAction(e -> {
-            SalesReportScreen screen = new SalesReportScreen(stage, admin);
-            stage.setScene(screen.getScene());
-        });
-
-        // 5. Logout
-        logoutBtn.setOnAction(e -> {
-            LoginScreen login = new LoginScreen(stage);
-            stage.setScene(login.getScene());
-        });
-
-        // Final Assembly
-        root.getChildren().addAll(header, sep, grid);
-
-        return new Scene(root, 800, 600);
-    }
-
-    /**
-     * Helper method to create styled buttons quickly
-     */
-    private Button createMenuButton(String text, String colorHex) {
-        Button btn = new Button(text);
-        btn.setPrefSize(250, 60);
-        btn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        btn.setCursor(javafx.scene.Cursor.HAND);
-
-        // CSS Styling for the button
-        btn.setStyle(
-                "-fx-background-color: " + colorHex + ";" +
-                        "-fx-text-fill: white;" +
-                        "-fx-background-radius: 8;" +
-                        "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 5);"
+        sidebar.getChildren().addAll(
+            new HBox(accentBar, brandBox) {{ setAlignment(Pos.CENTER_LEFT); }},
+            manageMoviesBtn, manageShowtimesBtn, manageUsersBtn, salesReportBtn,
+            spacer, logoutBtn
         );
 
-        // Hover effect
-        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: derive(" + colorHex + ", -10%); -fx-text-fill: white; -fx-background-radius: 8;"));
-        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: " + colorHex + "; -fx-text-fill: white; -fx-background-radius: 8;"));
+        // ── Main Content ─────────────────────────────────────────────
+        VBox content = new VBox(24);
+        content.setPadding(new Insets(50, 50, 50, 50));
+        content.setStyle("-fx-background-color: #0b0f1a;");
 
+        // Greeting
+        Label greeting = new Label("Welcome back,");
+        greeting.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 14px;");
+        Label username = new Label(admin.getFullName());
+        username.setStyle("-fx-text-fill: #eaeaea; -fx-font-size: 32px; -fx-font-weight: bold;");
+
+        Separator sep = new Separator();
+        sep.setStyle("-fx-background-color: #2b3250;");
+        VBox.setMargin(sep, new Insets(4, 0, 12, 0));
+
+        // Section label
+        Label sectionLabel = new Label("QUICK ACTIONS");
+        sectionLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 10px; -fx-font-weight: bold;");
+
+        // Action cards
+        HBox cards = new HBox(20);
+        VBox moviesCard    = actionCard("🎥", "Manage Movies",    "Add, edit, or remove\nmovies from the system");
+        VBox showtimesCard = actionCard("🕒", "Manage Showtimes", "Schedule and manage\nmovie showtimes");
+        VBox usersCard     = actionCard("👥", "Manage Users",     "Add, edit, or remove\nAdmin and Cashier users");
+        VBox salesCard     = actionCard("📊", "Sales Report",     "View total revenue\nand ticket sales data");
+
+        cards.getChildren().addAll(moviesCard, showtimesCard, usersCard, salesCard);
+
+        // Footer
+        Region contentSpacer = new Region();
+        VBox.setVgrow(contentSpacer, Priority.ALWAYS);
+        Label footer = new Label("Authorized personnel only  •  " + admin.getRole());
+        footer.setStyle("-fx-text-fill: #2b3250; -fx-font-size: 11px;");
+
+        content.getChildren().addAll(
+            greeting, username, sep,
+            sectionLabel, cards,
+            contentSpacer, footer
+        );
+
+        // ── Wire up buttons ──────────────────────────────────────────
+        manageMoviesBtn.setOnAction(e ->
+            stage.setScene(new ManageMoviesScreen(stage, admin).getScene()));
+        manageShowtimesBtn.setOnAction(e ->
+            stage.setScene(new ManageShowtimesScreen(stage, admin).getScene()));
+        manageUsersBtn.setOnAction(e ->
+            stage.setScene(new ManageUsersScreen(stage, admin).getScene()));
+        salesReportBtn.setOnAction(e ->
+            stage.setScene(new SalesReportScreen(stage, admin).getScene()));
+        logoutBtn.setOnAction(e ->
+            stage.setScene(new LoginScreen(stage).getScene()));
+
+        // Card clicks mirror nav buttons
+        moviesCard.setOnMouseClicked(e ->
+            stage.setScene(new ManageMoviesScreen(stage, admin).getScene()));
+        showtimesCard.setOnMouseClicked(e ->
+            stage.setScene(new ManageShowtimesScreen(stage, admin).getScene()));
+        usersCard.setOnMouseClicked(e ->
+            stage.setScene(new ManageUsersScreen(stage, admin).getScene()));
+        salesCard.setOnMouseClicked(e ->
+            stage.setScene(new SalesReportScreen(stage, admin).getScene()));
+
+        root.setLeft(sidebar);
+        root.setCenter(content);
+        return new Scene(root, 1000, 620);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────
+
+    private VBox actionCard(String icon, String title, String desc) {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(28, 28, 28, 28));
+        card.setPrefWidth(200);
+        card.setStyle(
+            "-fx-background-color: #161b2e;" +
+            "-fx-background-radius: 6;" +
+            "-fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 16, 0, 0, 4);"
+        );
+
+        Label iconLabel = new Label(icon);
+        iconLabel.setStyle("-fx-font-size: 26px;");
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle(
+            "-fx-text-fill: #eaeaea;" +
+            "-fx-font-size: 15px;" +
+            "-fx-font-weight: bold;"
+        );
+
+        Label descLabel = new Label(desc);
+        descLabel.setStyle(
+            "-fx-text-fill: #7a849a;" +
+            "-fx-font-size: 12px;"
+        );
+        descLabel.setWrapText(true);
+
+        Rectangle bar = new Rectangle(40, 3);
+        bar.setFill(Color.web("#c9a84c"));
+        bar.setArcWidth(2);
+        bar.setArcHeight(2);
+        VBox.setMargin(bar, new Insets(6, 0, 0, 0));
+
+        card.getChildren().addAll(iconLabel, titleLabel, descLabel, bar);
+
+        card.setOnMouseEntered(e -> card.setStyle(
+            "-fx-background-color: #1e2540;" +
+            "-fx-background-radius: 6;" +
+            "-fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 24, 0, 0, 8);"
+        ));
+        card.setOnMouseExited(e -> card.setStyle(
+            "-fx-background-color: #161b2e;" +
+            "-fx-background-radius: 6;" +
+            "-fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 16, 0, 0, 4);"
+        ));
+
+        return card;
+    }
+
+    private Button navButton(String text) {
+        Button btn = new Button(text);
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.setAlignment(Pos.CENTER_LEFT);
+        btn.setPadding(new Insets(14, 24, 14, 24));
+        btn.setStyle(navStyle());
+        btn.setOnMouseEntered(e -> btn.setStyle(navHoverStyle()));
+        btn.setOnMouseExited(e  -> btn.setStyle(navStyle()));
         return btn;
+    }
+
+    private String navStyle() {
+        return "-fx-background-color: transparent;" +
+               "-fx-text-fill: #7a849a;" +
+               "-fx-font-size: 13px;" +
+               "-fx-cursor: hand;";
+    }
+
+    private String navHoverStyle() {
+        return "-fx-background-color: #1e2540;" +
+               "-fx-text-fill: #c9a84c;" +
+               "-fx-font-size: 13px;" +
+               "-fx-cursor: hand;";
+    }
+
+    private String logoutNavStyle() {
+        return "-fx-background-color: transparent;" +
+               "-fx-text-fill: #3d4560;" +
+               "-fx-font-size: 13px;" +
+               "-fx-cursor: hand;";
+    }
+
+    private String logoutNavHoverStyle() {
+        return "-fx-background-color: transparent;" +
+               "-fx-text-fill: #e05555;" +
+               "-fx-font-size: 13px;" +
+               "-fx-cursor: hand;";
     }
 }

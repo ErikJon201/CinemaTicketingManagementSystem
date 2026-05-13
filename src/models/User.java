@@ -24,4 +24,5 @@ public abstract class User {
     public void setUsername(String username) { this.username = username; }
     public void setPassword(String password) { this.password = password; }
     public void setFullName(String fullName) { this.fullName = fullName; }
+    public void setRole(String role) { this.role = role; }
 }
