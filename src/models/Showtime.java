@@ -33,6 +33,7 @@ public class Showtime {
         }
         return count;
     }
-
+      public void setTime(String time)   { this.time = time; }
+    public void setPrice(double price) { this.price = price; }
     public void bookSeat(int r, int c) { seats[r][c] = true; }
 }

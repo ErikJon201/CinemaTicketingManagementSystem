@@ -109,7 +109,7 @@ public class CashierDashboard {
             "-fx-font-weight: bold;"
         );
 
-        Label Top10 = new Label("TOP 10 MOVIES");
+        Label Top10 = new Label("MOVIES");
         Top10.setStyle(
             "-fx-text-fill: #7a849a;" +
             "-fx-font-size: 10px;" +
