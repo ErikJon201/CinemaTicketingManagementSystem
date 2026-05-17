@@ -167,7 +167,7 @@ public class ManageMoviesScreen {
                 Movie newMovie = new Movie(title, genre, duration);
                 CinemaManager.getInstance().addMovie(newMovie);
 
-                Showtime defaultShowtime = new Showtime(newMovie, "Cinema 1", time, price, 5, 8);
+                Showtime defaultShowtime = new Showtime(newMovie, "Cinema 1", "TBD", time, price, 5, 8);
                 CinemaManager.getInstance().addShowtime(defaultShowtime);
 
                 txtTitle.clear(); txtGenre.clear(); txtDuration.clear();

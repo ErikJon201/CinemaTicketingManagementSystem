@@ -30,7 +30,6 @@ public class SeatSelectionScreen {
         sidebar.setPrefWidth(220);
         sidebar.setStyle("-fx-background-color: #161b2e;");
 
-        // ── Sidebar Top ───────────────────────────────────────────────
         VBox sideTop = new VBox(0);
 
         Rectangle accentBar = new Rectangle(4, 500);
@@ -64,8 +63,10 @@ public class SeatSelectionScreen {
         movieName.setStyle("-fx-text-fill: #eaeaea; -fx-font-size: 14px; -fx-font-weight: bold;");
         movieName.setWrapText(true);
 
-        Label timeLabel = new Label("🕐  " + showtime.getTime());
-        timeLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 12px;");
+     
+        Label dateTimeLabel = new Label("📅  " + showtime.getDateTime());
+        dateTimeLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 12px;");
+        dateTimeLabel.setWrapText(true);
 
         Label pricePerSeat = new Label("PHP " + showtime.getPrice() + " / seat");
         pricePerSeat.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 12px;");
@@ -92,7 +93,7 @@ public class SeatSelectionScreen {
         );
 
         summaryCard.getChildren().addAll(
-            summaryTitle, movieName, timeLabel, pricePerSeat,
+            summaryTitle, movieName, dateTimeLabel, pricePerSeat,
             sumSep, availableLabel, totalLabel
         );
 
@@ -103,8 +104,8 @@ public class SeatSelectionScreen {
         Label legendTitle = new Label("LEGEND");
         legendTitle.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
 
-        HBox availLegend   = legendItem("#2e7d4f", "Available");
-        HBox takenLegend   = legendItem("#7a2020", "Taken");
+        HBox availLegend    = legendItem("#2e7d4f", "Available");
+        HBox takenLegend    = legendItem("#7a2020", "Taken");
         HBox selectedLegend = legendItem("#c9a84c", "Selected");
 
         legendBox.getChildren().addAll(legendTitle, availLegend, takenLegend, selectedLegend);
@@ -114,7 +115,7 @@ public class SeatSelectionScreen {
             summaryCard, legendBox
         );
 
-        // ── Sidebar Bottom: Buttons always pinned ─────────────────────
+        // ── Sidebar Bottom ────────────────────────────────────────────
         Button buyBtn = new Button("CONFIRM PURCHASE");
         buyBtn.setMaxWidth(Double.MAX_VALUE);
         buyBtn.setPadding(new Insets(13, 0, 13, 0));
@@ -184,7 +185,6 @@ public class SeatSelectionScreen {
             "-fx-border-width: 1;"
         );
 
-        // ── Seat Grid ─────────────────────────────────────────────────
         GridPane seatGrid = new GridPane();
         seatGrid.setHgap(10);
         seatGrid.setVgap(10);
@@ -229,7 +229,6 @@ public class SeatSelectionScreen {
 
         content.getChildren().addAll(screenLabel, seatGrid);
 
-        // ── Wire up buttons ───────────────────────────────────────────
         buyBtn.setOnAction(e -> {
             if (total[0] == 0) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -253,7 +252,11 @@ public class SeatSelectionScreen {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Purchase Confirmed");
             alert.setHeaderText(null);
-            alert.setContentText("Purchase confirmed!\nTotal paid: PHP " + String.format("%.2f", total[0]));
+            alert.setContentText(
+                "Purchase confirmed!\n" +
+                "Showtime: " + showtime.getDateTime() + "\n" +   // NEW: date shown in receipt
+                "Total paid: PHP " + String.format("%.2f", total[0])
+            );
             alert.showAndWait();
             stage.setScene(new CashierDashboard(stage, cashier).getScene());
         });

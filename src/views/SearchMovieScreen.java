@@ -169,7 +169,7 @@ public class SearchMovieScreen {
             }
         });
 
-        // ── Logic (unchanged) ─────────────────────────────────────────
+        // ── Logic ─────────────────────────────────────────
         movieListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 showtimeListView.getItems().clear();
@@ -178,7 +178,7 @@ public class SearchMovieScreen {
                         showtimeListView.getItems().add("Title: " + st.getMovieTitle());
                         showtimeListView.getItems().add("Genre: " + st.getMovieGenre());
                         showtimeListView.getItems().add("Duration: " + st.getMovieDuration() + " minutes");
-                        showtimeListView.getItems().add(st.getTime() + " - PHP " + st.getPrice());
+                        showtimeListView.getItems().add(st.getDateTime() + " - PHP " + st.getPrice());
                     }
                 }
                 if (showtimeListView.getItems().isEmpty()) {

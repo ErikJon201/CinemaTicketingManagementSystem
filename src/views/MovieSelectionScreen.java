@@ -14,7 +14,7 @@ public class MovieSelectionScreen {
     private Cashier cashier;
 
     public MovieSelectionScreen(Stage stage, Cashier cashier) {
-        this.stage = stage;
+        this.stage   = stage;
         this.cashier = cashier;
     }
 
@@ -24,7 +24,7 @@ public class MovieSelectionScreen {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #0b0f1a;");
 
-        // ── Sidebar (same as dashboard) ───────────────────────────────
+        // ── Sidebar ───────────────────────────────────────────────────
         VBox sidebar = new VBox(0);
         sidebar.setPrefWidth(200);
         sidebar.setStyle("-fx-background-color: #161b2e;");
@@ -147,8 +147,10 @@ public class MovieSelectionScreen {
                 "-fx-font-size: 11px;"
             );
 
-            Label timeLbl = new Label("🕐 " + st.getTime());
-            timeLbl.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 11px;");
+            
+            Label dateTimeLbl = new Label("📅 " + st.getDateTime());
+            dateTimeLbl.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 11px;");
+            dateTimeLbl.setWrapText(true);
 
             Label priceLbl = new Label("PHP " + st.getPrice());
             priceLbl.setStyle(
@@ -156,7 +158,7 @@ public class MovieSelectionScreen {
                 "-fx-font-size: 11px;"
             );
 
-            info.getChildren().addAll(titleLbl, genreDuration, timeLbl, priceLbl);
+            info.getChildren().addAll(titleLbl, genreDuration, dateTimeLbl, priceLbl);
             card.getChildren().addAll(posterBox, info);
 
             card.setOnMouseEntered(ev -> card.setStyle(
@@ -175,7 +177,6 @@ public class MovieSelectionScreen {
                 stage.setScene(new SeatSelectionScreen(stage, cashier, st).getScene())
             );
 
-            // Add to grid AFTER card is fully built
             int col = cardIndex[0] % 10;
             int row = cardIndex[0] / 10;
             cardsRow.add(card, col, row);
