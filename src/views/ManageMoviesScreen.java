@@ -12,6 +12,7 @@ import models.Admin;
 import models.CinemaManager;
 import models.Movie;
 import models.Showtime;
+import models.TheaterRoom;
 
 public class ManageMoviesScreen {
 
@@ -49,24 +50,24 @@ public class ManageMoviesScreen {
 
         VBox sideTop = new VBox(0);
         sideTop.getChildren().add(
-            new HBox(accentBar, brandBox) {{ setAlignment(Pos.CENTER_LEFT); }}
-        );
+                new HBox(accentBar, brandBox) {
+                    {
+                        setAlignment(Pos.CENTER_LEFT);
+                    }
+                });
 
         Button backBtn = new Button("← Back to Dashboard");
         backBtn.setMaxWidth(Double.MAX_VALUE);
         backBtn.setPadding(new Insets(13, 0, 13, 0));
         backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;"
-        );
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;");
         backBtn.setOnMouseEntered(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #7a849a; -fx-font-size: 12px; -fx-cursor: hand;"
-        ));
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: #7a849a; -fx-font-size: 12px; -fx-cursor: hand;"));
         backBtn.setOnMouseExited(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;"
-        ));
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;"));
 
         VBox sideBottom = new VBox(6);
         sideBottom.setPadding(new Insets(0, 16, 24, 16));
@@ -81,10 +82,9 @@ public class ManageMoviesScreen {
 
         Label heading = new Label("Manage Movies");
         heading.setStyle(
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 26px;" +
-            "-fx-font-weight: bold;"
-        );
+                "-fx-text-fill: #eaeaea;" +
+                        "-fx-font-size: 26px;" +
+                        "-fx-font-weight: bold;");
         Label sub = new Label("Add, update, or remove movies from the system");
         sub.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 13px;");
 
@@ -95,12 +95,11 @@ public class ManageMoviesScreen {
         table = new TableView<>();
         table.setItems(CinemaManager.getInstance().getMovies());
         table.setStyle(
-            "-fx-background-color: #0f1422;" +
-            "-fx-border-color: #2b3250;" +
-            "-fx-border-radius: 4;" +
-            "-fx-background-radius: 4;" +
-            "-fx-border-width: 1;"
-        );
+                "-fx-background-color: #0f1422;" +
+                        "-fx-border-color: #2b3250;" +
+                        "-fx-border-radius: 4;" +
+                        "-fx-background-radius: 4;" +
+                        "-fx-border-width: 1;");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         VBox.setVgrow(table, Priority.ALWAYS);
 
@@ -113,7 +112,7 @@ public class ManageMoviesScreen {
         TableColumn<Movie, Integer> durCol = new TableColumn<>("Duration (min)");
         durCol.setCellValueFactory(new PropertyValueFactory<>("duration"));
 
-        for (TableColumn<?, ?> col : new TableColumn[]{nameCol, genreCol, durCol}) {
+        for (TableColumn<?, ?> col : new TableColumn[] { nameCol, genreCol, durCol }) {
             col.setStyle("-fx-text-fill: #eaeaea; -fx-font-size: 12px;");
         }
 
@@ -124,10 +123,12 @@ public class ManageMoviesScreen {
             TableRow<Movie> row = new TableRow<>();
             row.setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
             row.setOnMouseEntered(e -> {
-                if (!row.isEmpty()) row.setStyle("-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;");
+                if (!row.isEmpty())
+                    row.setStyle("-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;");
             });
             row.setOnMouseExited(e -> {
-                if (!row.isEmpty()) row.setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
+                if (!row.isEmpty())
+                    row.setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
             });
             return row;
         });
@@ -135,43 +136,46 @@ public class ManageMoviesScreen {
         // ── Form Fields ───────────────────────────────────────────────
         Label formLabel = new Label("MOVIE DETAILS");
         formLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 10px; -fx-font-weight: bold;");
-        TextField txtTitle    = styledField("Movie Title");
-        TextField txtGenre    = styledField("Genre");
+        TextField txtTitle = styledField("Movie Title");
+        TextField txtGenre = styledField("Genre");
         TextField txtDuration = styledField("Duration (minutes)");
-        TextField txtTime     = styledField("Time (e.g. 2:00 PM)");
-        TextField txtPrice    = styledField("Price (PHP)");
+        TextField txtTime = styledField("Time (e.g. 2:00 PM)");
+        TextField txtPrice = styledField("Price (PHP)");
 
         HBox form = new HBox(12, txtTitle, txtGenre, txtDuration, txtTime, txtPrice);
-        HBox.setHgrow(txtTitle,    Priority.ALWAYS);
-        HBox.setHgrow(txtGenre,    Priority.ALWAYS);
+        HBox.setHgrow(txtTitle, Priority.ALWAYS);
+        HBox.setHgrow(txtGenre, Priority.ALWAYS);
         HBox.setHgrow(txtDuration, Priority.ALWAYS);
-        HBox.setHgrow(txtTime,     Priority.ALWAYS);
-        HBox.setHgrow(txtPrice,    Priority.ALWAYS);
+        HBox.setHgrow(txtTime, Priority.ALWAYS);
+        HBox.setHgrow(txtPrice, Priority.ALWAYS);
 
         // ── Action Buttons ────────────────────────────────────────────
-        Button addBtn    = primaryButton("＋  Add Movie");
+        Button addBtn = primaryButton("＋  Add Movie");
         Button updateBtn = secondaryButton("✎  Update Selected");
         Button deleteBtn = dangerButton("✕  Delete Selected");
 
         HBox actions = new HBox(12, addBtn, updateBtn, deleteBtn);
 
-    
-            addBtn.setOnAction(e -> {
+        addBtn.setOnAction(e -> {
             try {
-                String title    = txtTitle.getText();
-                String genre    = txtGenre.getText();
-                int duration    = Integer.parseInt(txtDuration.getText());
-                double price    = Double.parseDouble(txtPrice.getText());
-                String time     = txtTime.getText();
+                String title = txtTitle.getText();
+                String genre = txtGenre.getText();
+                int duration = Integer.parseInt(txtDuration.getText());
+                double price = Double.parseDouble(txtPrice.getText());
+                String time = txtTime.getText();
 
                 Movie newMovie = new Movie(title, genre, duration);
                 CinemaManager.getInstance().addMovie(newMovie);
 
-                Showtime defaultShowtime = new Showtime(newMovie, "Cinema 1", "TBD", time, price, 5, 8);
+                TheaterRoom defaultRoom = CinemaManager.getInstance().getRooms().get(0);
+                Showtime defaultShowtime = new Showtime(newMovie, defaultRoom, "TBD", time, price);
                 CinemaManager.getInstance().addShowtime(defaultShowtime);
 
-                txtTitle.clear(); txtGenre.clear(); txtDuration.clear();
-                txtTime.clear(); txtPrice.clear();
+                txtTitle.clear();
+                txtGenre.clear();
+                txtDuration.clear();
+                txtTime.clear();
+                txtPrice.clear();
             } catch (NumberFormatException ex) {
                 showError("Duration and Price must be numbers!");
             }
@@ -202,7 +206,8 @@ public class ManageMoviesScreen {
 
         deleteBtn.setOnAction(e -> {
             Movie selected = table.getSelectionModel().getSelectedItem();
-            if (selected != null) CinemaManager.getInstance().deleteMovie(selected);
+            if (selected != null)
+                CinemaManager.getInstance().deleteMovie(selected);
         });
 
         backBtn.setOnAction(e -> stage.setScene(new AdminDashboard(stage, admin).getScene()));
@@ -220,16 +225,15 @@ public class ManageMoviesScreen {
         TextField tf = new TextField();
         tf.setPromptText(prompt);
         tf.setStyle(
-            "-fx-background-color: #0f1422;" +
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-prompt-text-fill: #3d4560;" +
-            "-fx-border-color: #2b3250;" +
-            "-fx-border-radius: 4;" +
-            "-fx-background-radius: 4;" +
-            "-fx-border-width: 1;" +
-            "-fx-padding: 10 12;" +
-            "-fx-font-size: 13px;"
-        );
+                "-fx-background-color: #0f1422;" +
+                        "-fx-text-fill: #eaeaea;" +
+                        "-fx-prompt-text-fill: #3d4560;" +
+                        "-fx-border-color: #2b3250;" +
+                        "-fx-border-radius: 4;" +
+                        "-fx-background-radius: 4;" +
+                        "-fx-border-width: 1;" +
+                        "-fx-padding: 10 12;" +
+                        "-fx-font-size: 13px;");
         return tf;
     }
 
@@ -237,20 +241,17 @@ public class ManageMoviesScreen {
         Button btn = new Button(text);
         btn.setPadding(new Insets(10, 20, 10, 20));
         btn.setStyle(
-            "-fx-background-color: #c9a84c; -fx-text-fill: #0b0f1a;" +
-            "-fx-font-size: 12px; -fx-font-weight: bold;" +
-            "-fx-background-radius: 4; -fx-cursor: hand;"
-        );
+                "-fx-background-color: #c9a84c; -fx-text-fill: #0b0f1a;" +
+                        "-fx-font-size: 12px; -fx-font-weight: bold;" +
+                        "-fx-background-radius: 4; -fx-cursor: hand;");
         btn.setOnMouseEntered(e -> btn.setStyle(
-            "-fx-background-color: #e0bb6a; -fx-text-fill: #0b0f1a;" +
-            "-fx-font-size: 12px; -fx-font-weight: bold;" +
-            "-fx-background-radius: 4; -fx-cursor: hand;"
-        ));
+                "-fx-background-color: #e0bb6a; -fx-text-fill: #0b0f1a;" +
+                        "-fx-font-size: 12px; -fx-font-weight: bold;" +
+                        "-fx-background-radius: 4; -fx-cursor: hand;"));
         btn.setOnMouseExited(e -> btn.setStyle(
-            "-fx-background-color: #c9a84c; -fx-text-fill: #0b0f1a;" +
-            "-fx-font-size: 12px; -fx-font-weight: bold;" +
-            "-fx-background-radius: 4; -fx-cursor: hand;"
-        ));
+                "-fx-background-color: #c9a84c; -fx-text-fill: #0b0f1a;" +
+                        "-fx-font-size: 12px; -fx-font-weight: bold;" +
+                        "-fx-background-radius: 4; -fx-cursor: hand;"));
         return btn;
     }
 
@@ -258,20 +259,17 @@ public class ManageMoviesScreen {
         Button btn = new Button(text);
         btn.setPadding(new Insets(10, 20, 10, 20));
         btn.setStyle(
-            "-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;" +
-            "-fx-border-color: #2b3250; -fx-border-radius: 4; -fx-border-width: 1;"
-        );
+                "-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;" +
+                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;" +
+                        "-fx-border-color: #2b3250; -fx-border-radius: 4; -fx-border-width: 1;");
         btn.setOnMouseEntered(e -> btn.setStyle(
-            "-fx-background-color: #2b3250; -fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;" +
-            "-fx-border-color: #2b3250; -fx-border-radius: 4; -fx-border-width: 1;"
-        ));
+                "-fx-background-color: #2b3250; -fx-text-fill: #eaeaea;" +
+                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;" +
+                        "-fx-border-color: #2b3250; -fx-border-radius: 4; -fx-border-width: 1;"));
         btn.setOnMouseExited(e -> btn.setStyle(
-            "-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;" +
-            "-fx-border-color: #2b3250; -fx-border-radius: 4; -fx-border-width: 1;"
-        ));
+                "-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;" +
+                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;" +
+                        "-fx-border-color: #2b3250; -fx-border-radius: 4; -fx-border-width: 1;"));
         return btn;
     }
 
@@ -279,17 +277,14 @@ public class ManageMoviesScreen {
         Button btn = new Button(text);
         btn.setPadding(new Insets(10, 20, 10, 20));
         btn.setStyle(
-            "-fx-background-color: #7a2020; -fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"
-        );
+                "-fx-background-color: #7a2020; -fx-text-fill: #eaeaea;" +
+                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;");
         btn.setOnMouseEntered(e -> btn.setStyle(
-            "-fx-background-color: #a02828; -fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"
-        ));
+                "-fx-background-color: #a02828; -fx-text-fill: #eaeaea;" +
+                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"));
         btn.setOnMouseExited(e -> btn.setStyle(
-            "-fx-background-color: #7a2020; -fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"
-        ));
+                "-fx-background-color: #7a2020; -fx-text-fill: #eaeaea;" +
+                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"));
         return btn;
     }
 

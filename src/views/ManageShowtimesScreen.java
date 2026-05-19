@@ -88,7 +88,6 @@ public class ManageShowtimesScreen {
         sep.setStyle("-fx-background-color: #2b3250;");
 
         // ── Form Fields ───────────────────────────────────────────────
-      
         TextField txtDate  = styledField("Date (e.g. May 16, 2026)");
         TextField txtTime  = styledField("Time (e.g. 1:30 PM)");
         TextField txtPrice = styledField("Price (PHP)");
@@ -109,7 +108,9 @@ public class ManageShowtimesScreen {
         TableColumn<Showtime, String> movieCol = new TableColumn<>("Movie");
         movieCol.setCellValueFactory(new PropertyValueFactory<>("movieTitle"));
 
-    
+        TableColumn<Showtime, String> roomCol = new TableColumn<>("Room");
+        roomCol.setCellValueFactory(new PropertyValueFactory<>("roomName"));
+
         TableColumn<Showtime, String> dateCol = new TableColumn<>("Date");
         dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
 
@@ -119,7 +120,7 @@ public class ManageShowtimesScreen {
         TableColumn<Showtime, Double> priceCol = new TableColumn<>("Price (PHP)");
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
 
-        table.getColumns().addAll(movieCol, dateCol, timeCol, priceCol);
+        table.getColumns().addAll(movieCol, roomCol, dateCol, timeCol, priceCol);
 
         table.setRowFactory(tv -> {
             TableRow<Showtime> row = new TableRow<>();
@@ -133,19 +134,11 @@ public class ManageShowtimesScreen {
             return row;
         });
 
-        
-        table.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                txtDate.setText(newVal.getDate());
-                txtTime.setText(newVal.getTime());
-                txtPrice.setText(String.valueOf(newVal.getPrice()));
-            }
-        });
-
         // ── Form Label ────────────────────────────────────────────────
         Label formLabel = new Label("SHOWTIME DETAILS");
         formLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 10px; -fx-font-weight: bold;");
 
+        // ── Movie ComboBox ────────────────────────────────────────────
         ComboBox<Movie> movieCombo = new ComboBox<>();
         movieCombo.setItems(CinemaManager.getInstance().getMovies());
         movieCombo.setPromptText("Select Movie");
@@ -177,51 +170,124 @@ public class ManageShowtimesScreen {
             }
         });
 
-        
-        HBox form = new HBox(12, movieCombo, txtDate, txtTime, txtPrice);
+        // ── Room ComboBox ─────────────────────────────────────────────
+        ComboBox<TheaterRoom> roomCombo = new ComboBox<>();
+        roomCombo.setItems(CinemaManager.getInstance().getRooms());
+        roomCombo.setPromptText("Select Room");
+        roomCombo.setMaxWidth(Double.MAX_VALUE);
+        roomCombo.setStyle(
+            "-fx-background-color: #0f1422;" +
+            "-fx-text-fill: #eaeaea;" +
+            "-fx-prompt-text-fill: #3d4560;" +
+            "-fx-border-color: #2b3250;" +
+            "-fx-border-radius: 4;" +
+            "-fx-background-radius: 4;" +
+            "-fx-border-width: 1;" +
+            "-fx-font-size: 13px;"
+        );
+        roomCombo.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(TheaterRoom item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getName());
+                setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
+            }
+        });
+        roomCombo.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(TheaterRoom item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "Select Room" : item.getName());
+                setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
+            }
+        });
+
+        // ── Pre-fill form on row selection ────────────────────────────
+        table.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                txtDate.setText(newVal.getDate());
+                txtTime.setText(newVal.getTime());
+                txtPrice.setText(String.valueOf(newVal.getPrice()));
+                roomCombo.setValue(newVal.getRoom());
+                movieCombo.setValue(newVal.getMovie());
+            }
+        });
+
+        // ── Form Row ──────────────────────────────────────────────────
+        HBox form = new HBox(12, movieCombo, roomCombo, txtDate, txtTime, txtPrice);
         HBox.setHgrow(movieCombo, Priority.ALWAYS);
+        HBox.setHgrow(roomCombo,  Priority.ALWAYS);
         HBox.setHgrow(txtDate,    Priority.ALWAYS);
         HBox.setHgrow(txtTime,    Priority.ALWAYS);
         HBox.setHgrow(txtPrice,   Priority.ALWAYS);
 
         // ── Action Buttons ────────────────────────────────────────────
-        Button addBtn    = primaryButton("Update ShowTime");
+        Button addBtn    = primaryButton("Add Showtime");
+        Button updateBtn = primaryButton("Update Selected");
         Button deleteBtn = dangerButton("✕  Delete Selected");
 
-        HBox actions = new HBox(12, addBtn, deleteBtn);
+        HBox actions = new HBox(12, addBtn, updateBtn, deleteBtn);
 
-        // ── Logic ─────────────────────────────────────────────────────
+        // ── Add New Showtime ──────────────────────────────────────────
         addBtn.setOnAction(e -> {
-            Showtime selected = table.getSelectionModel().getSelectedItem();
-            if (selected == null) {
-                showError("Please select a showtime from the table first!");
-                return;
-            }
+            String date      = txtDate.getText().trim();
+            String time      = txtTime.getText().trim();
+            String priceStr  = txtPrice.getText().trim();
+            TheaterRoom room = roomCombo.getValue();
+            Movie movie      = movieCombo.getValue();
 
-            String date     = txtDate.getText().trim();
-            String time     = txtTime.getText().trim();
-            String priceStr = txtPrice.getText().trim();
-
-            
+            if (movie == null) { showError("Please select a Movie!"); return; }
+            if (room  == null) { showError("Please select a Theater Room!"); return; }
             if (date.isEmpty() || time.isEmpty() || priceStr.isEmpty()) {
                 showError("Please fill in Date, Time, and Price!");
                 return;
             }
-
             try {
                 double price = Double.parseDouble(priceStr);
-                selected.setDate(date);   // NEW
-                selected.setTime(time);
-                selected.setPrice(price);
-                table.refresh();
-                txtDate.clear();
-                txtTime.clear();
-                txtPrice.clear();
+                CinemaManager.getInstance().addShowtime(
+                    new Showtime(movie, room, date, time, price)
+                );
+                txtDate.clear(); txtTime.clear(); txtPrice.clear();
+                roomCombo.setValue(null); movieCombo.setValue(null);
             } catch (NumberFormatException ex) {
                 showError("Price must be a number!");
             }
         });
 
+        // ── Update Selected Showtime ──────────────────────────────────
+        updateBtn.setOnAction(e -> {
+            Showtime selected = table.getSelectionModel().getSelectedItem();
+            if (selected == null) { showError("Please select a showtime from the table first!"); return; }
+
+            String date      = txtDate.getText().trim();
+            String time      = txtTime.getText().trim();
+            String priceStr  = txtPrice.getText().trim();
+            TheaterRoom room = roomCombo.getValue();
+            Movie movie      = movieCombo.getValue();
+
+            if (movie == null) { showError("Please select a Movie!"); return; }
+            if (room  == null) { showError("Please select a Theater Room!"); return; }
+            if (date.isEmpty() || time.isEmpty() || priceStr.isEmpty()) {
+                showError("Please fill in Date, Time, and Price!");
+                return;
+            }
+            try {
+                double price = Double.parseDouble(priceStr);
+                selected.setMovie(movie);
+                selected.setRoom(room);
+                selected.setDate(date);
+                selected.setTime(time);
+                selected.setPrice(price);
+                table.refresh();
+                txtDate.clear(); txtTime.clear(); txtPrice.clear();
+                roomCombo.setValue(null); movieCombo.setValue(null);
+                table.getSelectionModel().clearSelection();
+            } catch (NumberFormatException ex) {
+                showError("Price must be a number!");
+            }
+        });
+
+        // ── Delete Selected Showtime ──────────────────────────────────
         deleteBtn.setOnAction(e -> {
             Showtime selected = table.getSelectionModel().getSelectedItem();
             if (selected != null) CinemaManager.getInstance().deleteShowtime(selected);

@@ -1,4 +1,5 @@
 package models;
+
 import java.time.LocalDateTime;
 
 public class Sale {
@@ -12,7 +13,15 @@ public class Sale {
         this.dateTime = LocalDateTime.now();
     }
 
-    public String getMovieTitle() { return movieTitle; }
-    public double getAmount() { return amount; }
-    public LocalDateTime getDateTime() { return dateTime; }
+    public String getMovieTitle() {
+        return movieTitle;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public LocalDateTime getDateTime() {
+        return dateTime;
+    }
 }
