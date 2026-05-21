@@ -6,17 +6,15 @@ import views.LoginScreen;
 public class Main extends Application {
     @Override
     public void start(Stage stage) {
-        stage.setTitle("Cinema Ticketing System");
+        stage.setTitle("CINEMAX - Cinema Management System");
         stage.setFullScreenExitHint("");
 
         stage.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
-                // Stretch root node to always fill the full scene
                 if (newScene.getRoot() instanceof Region root) {
                     root.prefWidthProperty().bind(newScene.widthProperty());
                     root.prefHeightProperty().bind(newScene.heightProperty());
                 }
-                stage.setFullScreen(true);
             }
         });
 

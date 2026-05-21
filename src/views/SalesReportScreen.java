@@ -1,13 +1,14 @@
 package views;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.paint.*;
-import javafx.scene.shape.*;
 import javafx.stage.Stage;
 import models.*;
+
 import java.util.Map;
 
 public class SalesReportScreen {
@@ -20,175 +21,118 @@ public class SalesReportScreen {
     }
 
     public Scene getScene() {
-
-        // ── Root ─────────────────────────────────────────────────────
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #0b0f1a;");
+        root.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        // ── Sidebar ───────────────────────────────────────────────────
-        BorderPane sidebar = new BorderPane();
-        sidebar.setPrefWidth(220);
-        sidebar.setStyle("-fx-background-color: #161b2e;");
+        String[] nav = {"Dashboard", "Movies", "Showtimes", "Theater Rooms", "Staff", "Sales Report"};
+        Runnable[] acts = {
+            () -> stage.setScene(new AdminDashboard(stage, admin).getScene()),
+            () -> stage.setScene(new ManageMoviesScreen(stage, admin).getScene()),
+            () -> stage.setScene(new ManageShowtimesScreen(stage, admin).getScene()),
+            () -> stage.setScene(new ManageRoomsScreen(stage, admin).getScene()),
+            () -> stage.setScene(new ManageUsersScreen(stage, admin).getScene()),
+            null
+        };
+        root.setLeft(UIHelper.sidebar(admin, "Sales Report", nav, acts,
+                () -> stage.setScene(new LoginScreen(stage).getScene())));
 
-        Rectangle accentBar = new Rectangle(4, 700);
-        accentBar.setFill(Color.web("#c9a84c"));
+        ScrollPane scroll = new ScrollPane();
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background:transparent;-fx-background-color:transparent;");
 
-        VBox brandBox = new VBox(4);
-        brandBox.setPadding(new Insets(30, 20, 30, 20));
-        brandBox.setStyle("-fx-border-color: transparent transparent #2b3250 transparent; -fx-border-width: 1;");
-        Label brand = new Label("🎬  CINETICKET");
-        brand.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 13px; -fx-font-weight: bold;");
-        Label portalTag = new Label("SALES REPORT");
-        portalTag.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
-        brandBox.getChildren().addAll(brand, portalTag);
+        VBox content = new VBox(28);
+        content.setPadding(new Insets(44, 48, 44, 48));
+        content.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        VBox sideTop = new VBox(0);
-        sideTop.getChildren().add(
-            new HBox(accentBar, brandBox) {{ setAlignment(Pos.CENTER_LEFT); }}
-        );
+        content.getChildren().add(UIHelper.pageHeader("Sales Report",
+                "Revenue analytics and transaction history."));
 
-        Button backBtn = new Button("← Back to Dashboard");
-        backBtn.setMaxWidth(Double.MAX_VALUE);
-        backBtn.setPadding(new Insets(13, 0, 13, 0));
-        backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;"
-        );
-        backBtn.setOnMouseEntered(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #7a849a; -fx-font-size: 12px; -fx-cursor: hand;"
-        ));
-        backBtn.setOnMouseExited(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;"
-        ));
+        // ── Summary stats ──────────────────────────────────────────────────────
+        SalesManager sm = SalesManager.getInstance();
 
-        VBox sideBottom = new VBox(6);
-        sideBottom.setPadding(new Insets(0, 16, 24, 16));
-        sideBottom.getChildren().add(backBtn);
+        HBox statsRow = new HBox(16);
+        HBox s1 = UIHelper.statCard(String.format("PHP %.2f", sm.getTotalRevenue()),
+                "Total Revenue", UIHelper.GREEN);
+        HBox s2 = UIHelper.statCard(String.valueOf(sm.getTotalTicketsSold()),
+                "Tickets Sold", UIHelper.BLUE);
+        HBox s3 = UIHelper.statCard(String.valueOf(sm.getTransactionCount()),
+                "Transactions", UIHelper.PURPLE);
+        HBox s4 = UIHelper.statCard(String.format("PHP %.2f", sm.getRevenueToday()),
+                "Today's Revenue", UIHelper.GOLD);
+        for (HBox s : new HBox[]{s1, s2, s3, s4}) HBox.setHgrow(s, Priority.ALWAYS);
+        statsRow.getChildren().addAll(s1, s2, s3, s4);
 
-        sidebar.setTop(sideTop);
-        sidebar.setBottom(sideBottom);
+        // ── Revenue by movie ───────────────────────────────────────────────────
+        Label movSec = UIHelper.sectionLbl("Revenue by Movie");
+        VBox.setMargin(movSec, new Insets(8, 0, 4, 0));
 
-        // ── Main Content ──────────────────────────────────────────────
-        VBox content = new VBox(20);
-        content.setPadding(new Insets(40, 50, 40, 50));
+        TableView<Map.Entry<String, Double>> movieTable = UIHelper.table();
+        movieTable.setPrefHeight(220);
+        movieTable.setMaxHeight(260);
 
-        Label heading = new Label("Sales Report");
-        heading.setStyle(
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 26px;" +
-            "-fx-font-weight: bold;"
-        );
-        Label sub = new Label("Total revenue breakdown by movie");
-        sub.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 13px;");
+        TableColumn<Map.Entry<String, Double>, String> mTitleCol = UIHelper.col("Movie", 300);
+        mTitleCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getKey()));
 
-        Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #2b3250;");
+        Map<String, Integer> ticketsByMovie = sm.getTicketsByMovie();
+        TableColumn<Map.Entry<String, Double>, String> mTicketsCol = UIHelper.col("Tickets Sold", 130);
+        mTicketsCol.setCellValueFactory(data ->
+                new SimpleStringProperty(String.valueOf(
+                        ticketsByMovie.getOrDefault(data.getValue().getKey(), 0))));
 
-        // ── Sales Data ────────────────────────────────────────────────
-        Map<String, Double> salesData = SalesManager.getInstance().getSalesByMovie();
+        TableColumn<Map.Entry<String, Double>, String> mRevCol = UIHelper.col("Revenue (PHP)", 160);
+        mRevCol.setCellValueFactory(data ->
+                new SimpleStringProperty(String.format("PHP %.2f", data.getValue().getValue())));
 
-        double grandTotal = salesData.values().stream()
-            .mapToDouble(Double::doubleValue).sum();
+        movieTable.getColumns().addAll(mTitleCol, mTicketsCol, mRevCol);
 
-        // Grand total summary card
-        VBox totalCard = new VBox(6);
-        totalCard.setPadding(new Insets(20, 24, 20, 24));
-        totalCard.setStyle(
-            "-fx-background-color: #161b2e;" +
-            "-fx-background-radius: 6;" +
-            "-fx-border-color: #c9a84c;" +
-            "-fx-border-radius: 6;" +
-            "-fx-border-width: 1;"
-        );
-        Label totalTitle = new Label("GRAND TOTAL REVENUE");
-        totalTitle.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 10px; -fx-font-weight: bold;");
-        Label totalAmount = new Label(String.format("PHP %.2f", grandTotal));
-        totalAmount.setStyle(
-            "-fx-text-fill: #c9a84c;" +
-            "-fx-font-size: 28px;" +
-            "-fx-font-weight: bold;"
-        );
-        totalCard.getChildren().addAll(totalTitle, totalAmount);
+        javafx.collections.ObservableList<Map.Entry<String, Double>> movieEntries =
+                javafx.collections.FXCollections.observableArrayList(
+                        sm.getSalesByMovie().entrySet());
+        movieTable.setItems(movieEntries);
 
-        // Per-movie breakdown label
-        Label breakdownLabel = new Label("REVENUE BY MOVIE");
-        breakdownLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 10px; -fx-font-weight: bold;");
-
-        // Per-movie rows
-        VBox movieRows = new VBox(8);
-
-        if (salesData.isEmpty()) {
-            Label empty = new Label("No sales recorded yet.");
-            empty.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 13px;");
-            movieRows.getChildren().add(empty);
-        } else {
-            for (Map.Entry<String, Double> entry : salesData.entrySet()) {
-                HBox row = new HBox();
-                row.setPadding(new Insets(14, 20, 14, 20));
-                row.setAlignment(Pos.CENTER_LEFT);
-                row.setStyle(
-                    "-fx-background-color: #0f1422;" +
-                    "-fx-background-radius: 4;" +
-                    "-fx-border-color: #2b3250;" +
-                    "-fx-border-radius: 4;" +
-                    "-fx-border-width: 1;"
-                );
-
-                Label movieTitle = new Label(entry.getKey());
-                movieTitle.setStyle(
-                    "-fx-text-fill: #eaeaea;" +
-                    "-fx-font-size: 13px;"
-                );
-                HBox.setHgrow(movieTitle, Priority.ALWAYS);
-
-                Label revenue = new Label(String.format("PHP %.2f", entry.getValue()));
-                revenue.setStyle(
-                    "-fx-text-fill: #c9a84c;" +
-                    "-fx-font-size: 13px;" +
-                    "-fx-font-weight: bold;"
-                );
-
-                row.getChildren().addAll(movieTitle, revenue);
-
-                // Hover effect
-                row.setOnMouseEntered(e -> row.setStyle(
-                    "-fx-background-color: #1e2540;" +
-                    "-fx-background-radius: 4;" +
-                    "-fx-border-color: #2b3250;" +
-                    "-fx-border-radius: 4;" +
-                    "-fx-border-width: 1;"
-                ));
-                row.setOnMouseExited(e -> row.setStyle(
-                    "-fx-background-color: #0f1422;" +
-                    "-fx-background-radius: 4;" +
-                    "-fx-border-color: #2b3250;" +
-                    "-fx-border-radius: 4;" +
-                    "-fx-border-width: 1;"
-                ));
-
-                movieRows.getChildren().add(row);
-            }
+        if (movieEntries.isEmpty()) {
+            movieTable.setPlaceholder(UIHelper.lbl("No sales recorded yet.", UIHelper.TEXT2, 13, false));
         }
 
-        // Scrollable rows
-        ScrollPane scrollPane = new ScrollPane(movieRows);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        // ── Transaction history ────────────────────────────────────────────────
+        Label txSec = UIHelper.sectionLbl("Transaction History");
+        VBox.setMargin(txSec, new Insets(8, 0, 4, 0));
 
-        backBtn.setOnAction(e -> stage.setScene(new AdminDashboard(stage, admin).getScene()));
+        TableView<Sale> txTable = UIHelper.table();
+        VBox.setVgrow(txTable, Priority.ALWAYS);
+        txTable.setMinHeight(200);
 
-        content.getChildren().addAll(
-            heading, sub, sep,
-            totalCard, breakdownLabel, scrollPane
-        );
+        TableColumn<Sale, Integer> txIdCol = UIHelper.col("ID", 50);
+        txIdCol.setCellValueFactory(new PropertyValueFactory<>("saleId"));
 
-        root.setLeft(sidebar);
-        root.setCenter(content);
-        return new Scene(root, 900, 580);
+        TableColumn<Sale, String> txMovieCol = UIHelper.col("Movie", 200);
+        txMovieCol.setCellValueFactory(new PropertyValueFactory<>("movieTitle"));
+
+        TableColumn<Sale, String> txSeatsCol = UIHelper.col("Seats", 140);
+        txSeatsCol.setCellValueFactory(new PropertyValueFactory<>("seatsDisplay"));
+
+        TableColumn<Sale, Integer> txQtyCol = UIHelper.col("Qty", 50);
+        txQtyCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
+        TableColumn<Sale, String> txAmtCol = UIHelper.col("Amount (PHP)", 120);
+        txAmtCol.setCellValueFactory(data ->
+                new SimpleStringProperty(String.format("PHP %.2f", data.getValue().getAmount())));
+
+        TableColumn<Sale, String> txCashierCol = UIHelper.col("Cashier", 140);
+        txCashierCol.setCellValueFactory(new PropertyValueFactory<>("cashierName"));
+
+        TableColumn<Sale, String> txDateCol = UIHelper.col("Date & Time", 180);
+        txDateCol.setCellValueFactory(new PropertyValueFactory<>("dateTimeFormatted"));
+
+        txTable.getColumns().addAll(txIdCol, txMovieCol, txSeatsCol, txQtyCol,
+                txAmtCol, txCashierCol, txDateCol);
+        txTable.setItems(sm.getSales());
+
+        content.getChildren().addAll(statsRow, movSec, movieTable, txSec, txTable);
+        scroll.setContent(content);
+        root.setCenter(scroll);
+        return new Scene(root, 1280, 760);
     }
 }

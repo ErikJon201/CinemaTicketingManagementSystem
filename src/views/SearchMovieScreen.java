@@ -1,4 +1,5 @@
 package views;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -6,8 +7,6 @@ import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.*;
-import javafx.scene.shape.*;
 import javafx.stage.Stage;
 import models.*;
 
@@ -21,206 +20,163 @@ public class SearchMovieScreen {
     }
 
     public Scene getScene() {
-
-        // ── Root ─────────────────────────────────────────────────────
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #0b0f1a;");
+        root.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        // ── Sidebar ───────────────────────────────────────────────────
-        BorderPane sidebar = new BorderPane();
-        sidebar.setPrefWidth(220);
-        sidebar.setStyle("-fx-background-color: #161b2e;");
+        String[] navLabels = {"Dashboard", "Now Showing", "Sell Tickets"};
+        Runnable[] navActs = {
+            () -> stage.setScene(new CashierDashboard(stage, cashier).getScene()),
+            null,
+            () -> stage.setScene(new MovieSelectionScreen(stage, cashier).getScene())
+        };
+        root.setLeft(UIHelper.sidebar(cashier, "Now Showing", navLabels, navActs,
+                () -> stage.setScene(new LoginScreen(stage).getScene())));
 
-        Rectangle accentBar = new Rectangle(4, 700);
-        accentBar.setFill(Color.web("#c9a84c"));
+        HBox main = new HBox(20);
+        main.setPadding(new Insets(36, 36, 36, 36));
+        main.setStyle("-fx-background-color:" + UIHelper.BG + ";");
+        HBox.setHgrow(main, Priority.ALWAYS);
 
-        VBox brandBox = new VBox(4);
-        brandBox.setPadding(new Insets(30, 20, 30, 20));
-        brandBox.setStyle("-fx-border-color: transparent transparent #2b3250 transparent; -fx-border-width: 1;");
-        Label brand = new Label("🎬  CINETICKET");
-        brand.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 13px; -fx-font-weight: bold;");
-        Label portalTag = new Label("SEARCH MOVIES");
-        portalTag.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
-        brandBox.getChildren().addAll(brand, portalTag);
+        // ── Left: movie list ───────────────────────────────────────────────────
+        VBox leftPane = new VBox(14);
+        leftPane.setPrefWidth(340);
+        leftPane.setMinWidth(320);
 
-        VBox sideTop = new VBox(0);
-        sideTop.getChildren().addAll(
-            new HBox(accentBar, brandBox) {{ setAlignment(Pos.CENTER_LEFT); }}
-        );
+        leftPane.getChildren().add(UIHelper.pageHeader("Now Showing",
+                "Browse and search available movies."));
 
-        Button backBtn = new Button("← Back to Dashboard");
-        backBtn.setMaxWidth(Double.MAX_VALUE);
-        backBtn.setPadding(new Insets(13, 0, 13, 0));
-        backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560;" +
-            "-fx-font-size: 12px;" +
-            "-fx-cursor: hand;"
-        );
-        backBtn.setOnMouseEntered(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #7a849a;" +
-            "-fx-font-size: 12px; -fx-cursor: hand;"
-        ));
-        backBtn.setOnMouseExited(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560;" +
-            "-fx-font-size: 12px; -fx-cursor: hand;"
-        ));
+        TextField searchF = UIHelper.tf("Search by title or genre...");
 
-        VBox sideBottom = new VBox(6);
-        sideBottom.setPadding(new Insets(0, 16, 24, 16));
-        sideBottom.getChildren().add(backBtn);
+        FilteredList<Movie> filtered =
+                new FilteredList<>(CinemaManager.getInstance().getMovies(), p -> true);
 
-        sidebar.setTop(sideTop);
-        sidebar.setBottom(sideBottom);
+        searchF.textProperty().addListener((obs, o, n) ->
+                filtered.setPredicate(m ->
+                        n == null || n.isEmpty() ||
+                        m.getTitle().toLowerCase().contains(n.toLowerCase()) ||
+                        m.getGenre().toLowerCase().contains(n.toLowerCase())));
 
-        // ── Main Content ──────────────────────────────────────────────
-        VBox content = new VBox(20);
-        content.setPadding(new Insets(40, 50, 40, 50));
+        ListView<Movie> movieList = new ListView<>(filtered);
+        VBox.setVgrow(movieList, Priority.ALWAYS);
+        movieList.setStyle("-fx-background-color:" + UIHelper.CARD +
+                ";-fx-border-color:" + UIHelper.BORDER +
+                ";-fx-border-radius:10;-fx-background-radius:10;");
+        movieList.setFixedCellSize(60);
 
-        Label heading = new Label("Search Movies");
-        heading.setStyle(
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 26px;" +
-            "-fx-font-weight: bold;"
-        );
-        Label sub = new Label("Find a movie and view its available showtimes");
-        sub.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 13px;");
-
-        Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #2b3250;");
-
-        // ── Search Bar ────────────────────────────────────────────────
-        TextField searchBar = new TextField();
-        searchBar.setPromptText("🔍  Type movie title to search...");
-        searchBar.setStyle(
-            "-fx-background-color: #0f1422;" +
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-prompt-text-fill: #3d4560;" +
-            "-fx-border-color: #2b3250;" +
-            "-fx-border-radius: 4;" +
-            "-fx-background-radius: 4;" +
-            "-fx-border-width: 1;" +
-            "-fx-padding: 10 14;" +
-            "-fx-font-size: 13px;"
-        );
-
-        // ── Movie List ────────────────────────────────────────────────
-        ObservableList<Movie> movieData = FXCollections.observableArrayList(
-            CinemaManager.getInstance().getMovies()
-        );
-        FilteredList<Movie> filteredData = new FilteredList<>(movieData, p -> true);
-
-        searchBar.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredData.setPredicate(movie -> {
-                if (newValue == null || newValue.isEmpty()) return true;
-                return movie.getTitle().toLowerCase().contains(newValue.toLowerCase());
-            });
-        });
-
-        Label selectLabel = sectionLabel("SELECT MOVIE");
-
-        ListView<Movie> movieListView = new ListView<>(filteredData);
-        movieListView.setPrefHeight(160);
-        movieListView.setStyle(listStyle());
-        movieListView.setCellFactory(param -> new ListCell<>() {
+        movieList.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(Movie item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
-                    setText(null);
-                    setStyle("-fx-background-color: transparent;");
-                } else {
-                    setText("🎬  " + item.getTitle());
-                    setStyle(
-                        "-fx-background-color: transparent;" +
-                        "-fx-text-fill: #eaeaea;" +
-                        "-fx-font-size: 13px;" +
-                        "-fx-padding: 8 12;"
-                    );
+                    setGraphic(null);
+                    setStyle("-fx-background-color:transparent;");
+                    return;
                 }
+                VBox cell = new VBox(3);
+                cell.setPadding(new Insets(8, 12, 8, 12));
+                cell.getChildren().addAll(
+                    UIHelper.lbl(item.getTitle(), UIHelper.TEXT, 13, true),
+                    UIHelper.lbl(item.getGenre() + "  •  " + item.getDurationFormatted()
+                            + "  •  " + item.getRating(), UIHelper.TEXT2, 11, false));
+                setGraphic(cell);
+                setStyle("-fx-background-color:transparent;");
             }
         });
 
-        // ── Showtime Panel ────────────────────────────────────────────
-        Label showtimeLabel = sectionLabel("AVAILABLE SHOWTIMES");
+        leftPane.getChildren().addAll(searchF, movieList);
 
-        ListView<String> showtimeListView = new ListView<>();
-        showtimeListView.setPrefHeight(160);
-        showtimeListView.setStyle(listStyle());
-        showtimeListView.setCellFactory(param -> new ListCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("-fx-background-color: transparent;");
-                } else {
-                    setText(item);
-                    boolean isGold = item.startsWith("PHP") || item.contains("PHP");
-                    setStyle(
-                        "-fx-background-color: transparent;" +
-                        "-fx-text-fill: " + (isGold ? "#c9a84c" : "#7a849a") + ";" +
-                        "-fx-font-size: 12px;" +
-                        "-fx-padding: 6 12;"
-                    );
+        // ── Right: showtime details ────────────────────────────────────────────
+        VBox rightPane = new VBox(16);
+        HBox.setHgrow(rightPane, Priority.ALWAYS);
+
+        Label detailHeader = UIHelper.lbl("Select a movie to view showtimes",
+                UIHelper.TEXT2, 14, false);
+
+        VBox detailCard = UIHelper.card();
+        VBox.setVgrow(detailCard, Priority.ALWAYS);
+        detailCard.getChildren().add(detailHeader);
+
+        rightPane.getChildren().addAll(
+            UIHelper.pageHeader("Showtime Details", "Showtimes for the selected movie."),
+            detailCard);
+
+        movieList.getSelectionModel().selectedItemProperty().addListener((obs, old, sel) -> {
+            detailCard.getChildren().clear();
+
+            if (sel == null) {
+                detailCard.getChildren().add(
+                    UIHelper.lbl("Select a movie to view showtimes.", UIHelper.TEXT2, 13, false));
+                return;
+            }
+
+            // Movie info
+            VBox movieInfo = new VBox(6);
+            movieInfo.getChildren().addAll(
+                UIHelper.lbl(sel.getTitle(), UIHelper.TEXT, 18, true),
+                UIHelper.lbl(
+                    sel.getGenre() + "  •  " + sel.getDurationFormatted() +
+                    "  •  " + sel.getRating() + "  •  " + sel.getReleaseYear(),
+                    UIHelper.TEXT2, 12, false));
+            if (!sel.getDescription().isEmpty())
+                movieInfo.getChildren().add(
+                    UIHelper.lbl(sel.getDescription(), UIHelper.TEXT2, 12, false));
+
+            detailCard.getChildren().addAll(movieInfo, UIHelper.sep());
+
+            // Showtimes for this movie
+            boolean found = false;
+            for (Showtime st : CinemaManager.getInstance().getShowtimes()) {
+                if (st.getMovie() == sel) {
+                    found = true;
+                    HBox stRow = buildShowtimeRow(st);
+                    detailCard.getChildren().add(stRow);
                 }
+            }
+            if (!found) {
+                detailCard.getChildren().add(
+                    UIHelper.lbl("No showtimes scheduled for this movie.", UIHelper.TEXT2, 13, false));
             }
         });
 
-        // ── Logic ─────────────────────────────────────────
-        movieListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                showtimeListView.getItems().clear();
-                for (Showtime st : CinemaManager.getInstance().getShowtimes()) {
-                    if (st.getMovie().getTitle().equals(newVal.getTitle())) {
-                        showtimeListView.getItems().add("Title: " + st.getMovieTitle());
-                        showtimeListView.getItems().add("Genre: " + st.getMovieGenre());
-                        showtimeListView.getItems().add("Duration: " + st.getMovieDuration() + " minutes");
-                        showtimeListView.getItems().add(st.getDateTime() + " - PHP " + st.getPrice());
-                    }
-                }
-                if (showtimeListView.getItems().isEmpty()) {
-                    showtimeListView.getItems().add("No showtimes found for this movie.");
-                }
-            }
-        });
+        main.getChildren().addAll(leftPane, rightPane);
 
-        backBtn.setOnAction(e -> stage.setScene(new CashierDashboard(stage, cashier).getScene()));
-
-        // Two-column layout for lists
-        HBox listsRow = new HBox(20);
-        VBox leftCol  = new VBox(8, selectLabel, movieListView);
-        VBox rightCol = new VBox(8, showtimeLabel, showtimeListView);
-        HBox.setHgrow(leftCol, Priority.ALWAYS);
-        HBox.setHgrow(rightCol, Priority.ALWAYS);
-        listsRow.getChildren().addAll(leftCol, rightCol);
-
-        content.getChildren().addAll(heading, sub, sep, searchBar, listsRow);
-
-        root.setLeft(sidebar);
-        root.setCenter(content);
-        return new Scene(root, 900, 560);
+        ScrollPane scroll = new ScrollPane(main);
+        scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
+        scroll.setStyle("-fx-background:transparent;-fx-background-color:transparent;");
+        root.setCenter(scroll);
+        return new Scene(root, 1280, 760);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────
+    private HBox buildShowtimeRow(Showtime st) {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(10, 12, 10, 12));
+        row.setStyle("-fx-background-color:" + UIHelper.CARD2 +
+                ";-fx-background-radius:8;");
 
-    private Label sectionLabel(String text) {
-        Label lbl = new Label(text);
-        lbl.setStyle(
-            "-fx-text-fill: #7a849a;" +
-            "-fx-font-size: 10px;" +
-            "-fx-font-weight: bold;"
-        );
-        return lbl;
-    }
+        VBox info = new VBox(4);
+        HBox.setHgrow(info, Priority.ALWAYS);
+        int avail = st.getAvailableSeats();
+        String aColor = avail == 0 ? "#e74c3c" : avail < 10 ? UIHelper.GOLD : UIHelper.GREEN;
 
-    private String listStyle() {
-        return  "-fx-background-color: #0f1422;" +
-                "-fx-border-color: #2b3250;" +
-                "-fx-border-radius: 4;" +
-                "-fx-background-radius: 4;" +
-                "-fx-border-width: 1;";
+        info.getChildren().addAll(
+            UIHelper.lbl(st.getDate() + "  —  " + st.getTime(), UIHelper.TEXT, 13, true),
+            UIHelper.lbl(st.getRoomName() + "  •  " + avail + " seats available  •  "
+                + String.format("PHP %.0f", st.getPrice()), aColor, 12, false));
+
+        Button sellBtn = UIHelper.primaryBtn("Sell Tickets");
+        sellBtn.setPrefHeight(34);
+
+        if (avail == 0) {
+            sellBtn.setText("Sold Out");
+            sellBtn.setDisable(true);
+        } else {
+            sellBtn.setOnAction(e ->
+                stage.setScene(new SeatSelectionScreen(stage, cashier, st).getScene()));
+        }
+
+        row.getChildren().addAll(info, sellBtn);
+        return row;
     }
 }

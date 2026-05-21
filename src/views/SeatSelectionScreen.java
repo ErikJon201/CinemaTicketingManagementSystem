@@ -1,12 +1,16 @@
 package views;
+
 import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.*;
-import javafx.scene.shape.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import models.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SeatSelectionScreen {
     private Stage stage;
@@ -20,288 +24,276 @@ public class SeatSelectionScreen {
     }
 
     public Scene getScene() {
-
-        // ── Root ─────────────────────────────────────────────────────
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #0b0f1a;");
+        root.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        // ── Sidebar ───────────────────────────────────────────────────
-        BorderPane sidebar = new BorderPane();
-        sidebar.setPrefWidth(220);
-        sidebar.setStyle("-fx-background-color: #161b2e;");
-
-        VBox sideTop = new VBox(0);
-
-        Rectangle accentBar = new Rectangle(4, 500);
-        accentBar.setFill(Color.web("#c9a84c"));
-
-        VBox brandBox = new VBox(4);
-        brandBox.setPadding(new Insets(30, 20, 30, 20));
-        brandBox.setStyle("-fx-border-color: transparent transparent #2b3250 transparent; -fx-border-width: 1;");
-        Label brand = new Label("🎬  CINETICKET");
-        brand.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 13px; -fx-font-weight: bold;");
-        Label portalTag = new Label("SEAT SELECTION");
-        portalTag.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
-        brandBox.getChildren().addAll(brand, portalTag);
-
-        // ── Booking Summary Card ──────────────────────────────────────
-        VBox summaryCard = new VBox(14);
-        summaryCard.setPadding(new Insets(20, 20, 20, 20));
-        summaryCard.setStyle(
-            "-fx-background-color: #0f1422;" +
-            "-fx-border-color: #2b3250;" +
-            "-fx-border-width: 1;" +
-            "-fx-border-radius: 4;" +
-            "-fx-background-radius: 4;"
-        );
-        VBox.setMargin(summaryCard, new Insets(20, 16, 0, 16));
-
-        Label summaryTitle = new Label("BOOKING SUMMARY");
-        summaryTitle.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 10px; -fx-font-weight: bold;");
-
-        Label movieName = new Label(showtime.getMovie().getTitle());
-        movieName.setStyle("-fx-text-fill: #eaeaea; -fx-font-size: 14px; -fx-font-weight: bold;");
-        movieName.setWrapText(true);
-
-     
-        Label dateTimeLabel = new Label("📅  " + showtime.getDateTime());
-        dateTimeLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 12px;");
-        dateTimeLabel.setWrapText(true);
-
-        Label pricePerSeat = new Label("PHP " + showtime.getPrice() + " / seat");
-        pricePerSeat.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 12px;");
-
-        Separator sumSep = new Separator();
-        sumSep.setStyle("-fx-background-color: #2b3250;");
-
-        double[] total = {0};
         boolean[][] seats = showtime.getSeats();
+        boolean[] selected = new boolean[seats.length * seats[0].length];
+        List<String> selectedLabels = new ArrayList<>();
+        double[] total = {0};
 
-        int availableCount = 0;
-        for (boolean[] row : seats)
-            for (boolean seat : row)
-                if (!seat) availableCount++;
+        // ── Sidebar ────────────────────────────────────────────────────────────
+        VBox sidebar = new VBox(0);
+        sidebar.setPrefWidth(270);
+        sidebar.setMinWidth(270);
+        sidebar.setStyle("-fx-background-color:" + UIHelper.SIDEBAR + ";");
 
-        Label availableLabel = new Label("Available: " + availableCount + " seats");
-        availableLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 12px;");
+        // Brand
+        VBox brand = new VBox(3);
+        brand.setPadding(new Insets(24, 20, 20, 20));
+        brand.setStyle("-fx-border-color:transparent transparent " + UIHelper.BORDER +
+                " transparent;-fx-border-width:1;");
+        brand.getChildren().addAll(
+            UIHelper.lbl("CINEMAX", UIHelper.RED, 20, true),
+            UIHelper.lbl("Seat Selection", UIHelper.TEXT2, 11, false));
 
-        Label totalLabel = new Label("Total:  PHP 0.00");
-        totalLabel.setStyle(
-            "-fx-text-fill: #c9a84c;" +
-            "-fx-font-size: 16px;" +
-            "-fx-font-weight: bold;"
-        );
+        // Booking summary card
+        VBox summaryCard = UIHelper.card();
+        VBox.setMargin(summaryCard, new Insets(16, 14, 0, 14));
+
+        Label sumTitle = UIHelper.lbl("BOOKING SUMMARY", UIHelper.MUTED, 10, true);
+
+        Label movieLbl = UIHelper.lbl(showtime.getMovieTitle(), UIHelper.TEXT, 14, true);
+        movieLbl.setWrapText(true);
+        Label genreLbl = UIHelper.lbl(showtime.getMovieGenre() + "  •  " +
+                showtime.getMovie().getDurationFormatted(), UIHelper.TEXT2, 12, false);
+        Label dateLbl  = UIHelper.lbl(showtime.getDateTime(), UIHelper.TEXT2, 12, false);
+        Label roomLbl  = UIHelper.lbl(showtime.getRoomName(), UIHelper.TEXT2, 12, false);
+        Label priceLbl = UIHelper.lbl(String.format("PHP %.0f / seat", showtime.getPrice()),
+                UIHelper.TEXT2, 12, false);
+
+        int initAvail = showtime.getAvailableSeats();
+        Label availLbl  = UIHelper.lbl("Available: " + initAvail + " seats",
+                UIHelper.GREEN, 12, false);
+        Label selectedLbl = UIHelper.lbl("Selected: 0 seats", UIHelper.TEXT2, 12, false);
+        Label totalLbl  = UIHelper.lbl("Total: PHP 0.00", UIHelper.GOLD, 20, true);
 
         summaryCard.getChildren().addAll(
-            summaryTitle, movieName, dateTimeLabel, pricePerSeat,
-            sumSep, availableLabel, totalLabel
-        );
+            sumTitle, UIHelper.sep(),
+            movieLbl, genreLbl, dateLbl, roomLbl, priceLbl,
+            UIHelper.sep(),
+            availLbl, selectedLbl, totalLbl);
 
-        // ── Legend ────────────────────────────────────────────────────
-        VBox legendBox = new VBox(8);
-        legendBox.setPadding(new Insets(20, 20, 0, 20));
+        // Legend
+        VBox legend = new VBox(8);
+        legend.setPadding(new Insets(16, 20, 16, 20));
+        legend.getChildren().addAll(
+            UIHelper.sectionLbl("Legend"),
+            legendRow(UIHelper.SEAT_FREE, UIHelper.SEAT_FREE_B,   "Available"),
+            legendRow(UIHelper.SEAT_TAKEN, UIHelper.SEAT_TAKEN_B, "Taken"),
+            legendRow(UIHelper.SEAT_SEL,  UIHelper.SEAT_SEL_B,    "Selected"));
 
-        Label legendTitle = new Label("LEGEND");
-        legendTitle.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
+        // Action buttons
+        VBox actions = new VBox(8);
+        actions.setPadding(new Insets(0, 14, 20, 14));
+        actions.setStyle("-fx-border-color:" + UIHelper.BORDER +
+                " transparent transparent transparent;-fx-border-width:1;");
 
-        HBox availLegend    = legendItem("#2e7d4f", "Available");
-        HBox takenLegend    = legendItem("#7a2020", "Taken");
-        HBox selectedLegend = legendItem("#c9a84c", "Selected");
+        Button confirmBtn = UIHelper.btn("Confirm Purchase", UIHelper.GREEN, "#ffffff");
+        confirmBtn.setMaxWidth(Double.MAX_VALUE);
+        confirmBtn.setPrefHeight(44);
 
-        legendBox.getChildren().addAll(legendTitle, availLegend, takenLegend, selectedLegend);
-
-        sideTop.getChildren().addAll(
-            new HBox(accentBar, brandBox) {{ setAlignment(Pos.CENTER_LEFT); }},
-            summaryCard, legendBox
-        );
-
-        // ── Sidebar Bottom ────────────────────────────────────────────
-        Button buyBtn = new Button("CONFIRM PURCHASE");
-        buyBtn.setMaxWidth(Double.MAX_VALUE);
-        buyBtn.setPadding(new Insets(13, 0, 13, 0));
-        buyBtn.setStyle(
-            "-fx-background-color: #c9a84c;" +
-            "-fx-text-fill: #0b0f1a;" +
-            "-fx-font-size: 12px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-background-radius: 4;" +
-            "-fx-cursor: hand;"
-        );
-        buyBtn.setOnMouseEntered(e -> buyBtn.setStyle(
-            "-fx-background-color: #e0bb6a; -fx-text-fill: #0b0f1a;" +
-            "-fx-font-size: 12px; -fx-font-weight: bold;" +
-            "-fx-background-radius: 4; -fx-cursor: hand;"
-        ));
-        buyBtn.setOnMouseExited(e -> buyBtn.setStyle(
-            "-fx-background-color: #c9a84c; -fx-text-fill: #0b0f1a;" +
-            "-fx-font-size: 12px; -fx-font-weight: bold;" +
-            "-fx-background-radius: 4; -fx-cursor: hand;"
-        ));
-
-        Button backBtn = new Button("← Back");
+        Button backBtn = new Button("Back");
         backBtn.setMaxWidth(Double.MAX_VALUE);
-        backBtn.setPadding(new Insets(10, 0, 10, 0));
-        backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560;" +
-            "-fx-font-size: 12px;" +
-            "-fx-cursor: hand;"
-        );
-        backBtn.setOnMouseEntered(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #7a849a;" +
-            "-fx-font-size: 12px; -fx-cursor: hand;"
-        ));
-        backBtn.setOnMouseExited(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560;" +
-            "-fx-font-size: 12px; -fx-cursor: hand;"
-        ));
+        backBtn.setStyle("-fx-background-color:transparent;-fx-text-fill:" + UIHelper.TEXT2 +
+                ";-fx-font-size:13;-fx-cursor:hand;-fx-padding:9 0;");
+        backBtn.setOnMouseEntered(e ->
+            backBtn.setStyle("-fx-background-color:transparent;-fx-text-fill:" + UIHelper.TEXT +
+                    ";-fx-font-size:13;-fx-cursor:hand;-fx-padding:9 0;"));
+        backBtn.setOnMouseExited(e ->
+            backBtn.setStyle("-fx-background-color:transparent;-fx-text-fill:" + UIHelper.TEXT2 +
+                    ";-fx-font-size:13;-fx-cursor:hand;-fx-padding:9 0;"));
+        backBtn.setOnAction(e ->
+            stage.setScene(new CashierDashboard(stage, cashier).getScene()));
 
-        VBox sideBottom = new VBox(6);
-        sideBottom.setPadding(new Insets(0, 16, 24, 16));
-        sideBottom.getChildren().addAll(buyBtn, backBtn);
+        actions.getChildren().addAll(confirmBtn, backBtn);
 
-        sidebar.setTop(sideTop);
-        sidebar.setBottom(sideBottom);
+        Region sidespacer = new Region();
+        VBox.setVgrow(sidespacer, Priority.ALWAYS);
+        sidebar.getChildren().addAll(brand, summaryCard, legend, sidespacer, actions);
 
-        // ── Main: Screen + Seat Grid ──────────────────────────────────
-        VBox content = new VBox(28);
-        content.setPadding(new Insets(40, 50, 40, 50));
-        content.setAlignment(Pos.TOP_CENTER);
+        // ── Seat grid ──────────────────────────────────────────────────────────
+        VBox seatArea = new VBox(20);
+        seatArea.setPadding(new Insets(36, 44, 44, 44));
+        seatArea.setAlignment(Pos.TOP_CENTER);
 
-        Label screenLabel = new Label("S  C  R  E  E  N");
-        screenLabel.setMaxWidth(Double.MAX_VALUE);
-        screenLabel.setAlignment(Pos.CENTER);
-        screenLabel.setPadding(new Insets(8, 0, 8, 0));
-        screenLabel.setStyle(
-            "-fx-text-fill: #3d4560;" +
-            "-fx-font-size: 11px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-background-color: #161b2e;" +
-            "-fx-background-radius: 4;" +
-            "-fx-border-color: #2b3250;" +
-            "-fx-border-radius: 4;" +
-            "-fx-border-width: 1;"
-        );
+        // Screen indicator
+        HBox screenBox = new HBox();
+        screenBox.setAlignment(Pos.CENTER);
+        screenBox.setMaxWidth(Double.MAX_VALUE);
+        Label screenLbl = new Label("S  C  R  E  E  N");
+        screenLbl.setMaxWidth(Double.MAX_VALUE);
+        screenLbl.setAlignment(Pos.CENTER);
+        screenLbl.setPadding(new Insets(7, 0, 7, 0));
+        screenLbl.setStyle("-fx-text-fill:" + UIHelper.MUTED + ";-fx-font-size:11;" +
+                "-fx-font-weight:bold;-fx-background-color:" + UIHelper.CARD2 +
+                ";-fx-background-radius:4;-fx-border-color:" + UIHelper.BORDER +
+                ";-fx-border-radius:4;-fx-border-width:1;");
+        HBox.setHgrow(screenLbl, Priority.ALWAYS);
+        screenBox.getChildren().add(screenLbl);
+        screenBox.setMaxWidth(700);
 
-        GridPane seatGrid = new GridPane();
-        seatGrid.setHgap(10);
-        seatGrid.setVgap(10);
-        seatGrid.setAlignment(Pos.CENTER);
+        GridPane grid = new GridPane();
+        grid.setHgap(8);
+        grid.setVgap(8);
+        grid.setAlignment(Pos.CENTER);
 
-        boolean[] selectedState = new boolean[seats.length * seats[0].length];
+        // Column number headers
+        for (int c = 0; c < seats[0].length; c++) {
+            Label colHdr = UIHelper.lbl(String.valueOf(c + 1), UIHelper.MUTED, 10, false);
+            colHdr.setPrefWidth(42);
+            colHdr.setAlignment(Pos.CENTER);
+            grid.add(colHdr, c + 1, 0);
+        }
 
         for (int r = 0; r < seats.length; r++) {
-            Label rowLabel = new Label(String.valueOf((char)('A' + r)));
-            rowLabel.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 11px; -fx-font-weight: bold;");
-            rowLabel.setAlignment(Pos.CENTER_RIGHT);
-            rowLabel.setPrefWidth(20);
-            seatGrid.add(rowLabel, 0, r);
+            Label rowHdr = UIHelper.lbl(String.valueOf((char)('A' + r)), UIHelper.MUTED, 11, true);
+            rowHdr.setPrefWidth(20);
+            rowHdr.setAlignment(Pos.CENTER_RIGHT);
+            grid.add(rowHdr, 0, r + 1);
 
             for (int c = 0; c < seats[r].length; c++) {
-                double price = showtime.getPrice();
                 Button seatBtn = new Button((char)('A' + r) + "" + (c + 1));
-                seatBtn.setPrefSize(48, 40);
-                seatBtn.setStyle(seats[r][c] ? takenStyle() : availStyle());
+                seatBtn.setPrefSize(42, 36);
+                seatBtn.setStyle(seats[r][c] ? takenStyle() : freeStyle());
                 if (seats[r][c]) seatBtn.setDisable(true);
 
+                int rr = r, cc = c;
                 int idx = r * seats[0].length + c;
+                String seatLabel = (char)('A' + r) + "" + (c + 1);
+                double price = showtime.getPrice();
 
                 if (!seats[r][c]) {
                     seatBtn.setOnAction(e -> {
-                        if (!selectedState[idx]) {
-                            selectedState[idx] = true;
+                        if (!selected[idx]) {
+                            selected[idx] = true;
+                            selectedLabels.add(seatLabel);
                             seatBtn.setStyle(selectedStyle());
                             total[0] += price;
                         } else {
-                            selectedState[idx] = false;
-                            seatBtn.setStyle(availStyle());
+                            selected[idx] = false;
+                            selectedLabels.remove(seatLabel);
+                            seatBtn.setStyle(freeStyle());
                             total[0] -= price;
                         }
-                        totalLabel.setText(String.format("Total:  PHP %.2f", total[0]));
+                        int cnt = selectedLabels.size();
+                        selectedLbl.setText("Selected: " + cnt + " seat" + (cnt != 1 ? "s" : ""));
+                        totalLbl.setText(String.format("Total: PHP %.2f", total[0]));
                     });
                 }
-
-                seatGrid.add(seatBtn, c + 1, r);
+                grid.add(seatBtn, c + 1, r + 1);
             }
         }
 
-        content.getChildren().addAll(screenLabel, seatGrid);
+        ScrollPane gridScroll = new ScrollPane(grid);
+        gridScroll.setFitToWidth(true);
+        gridScroll.setStyle("-fx-background:transparent;-fx-background-color:transparent;");
 
-        buyBtn.setOnAction(e -> {
-            if (total[0] == 0) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("No Seats Selected");
-                alert.setHeaderText(null);
-                alert.setContentText("Please select at least one seat before confirming.");
-                alert.showAndWait();
+        seatArea.getChildren().addAll(screenBox, gridScroll);
+
+        // ── Confirm action ─────────────────────────────────────────────────────
+        confirmBtn.setOnAction(e -> {
+            if (selectedLabels.isEmpty()) {
+                Alert warn = new Alert(Alert.AlertType.WARNING, "Please select at least one seat.");
+                warn.setHeaderText(null);
+                warn.showAndWait();
                 return;
             }
-            for (int r = 0; r < seats.length; r++) {
-                for (int c = 0; c < seats[r].length; c++) {
-                    int idx = r * seats[0].length + c;
-                    if (selectedState[idx]) {
+
+            // Book seats and record single sale
+            for (int r = 0; r < seats.length; r++)
+                for (int c = 0; c < seats[r].length; c++)
+                    if (selected[r * seats[0].length + c])
                         showtime.bookSeat(r, c);
-                        SalesManager.getInstance().recordSale(
-                            showtime.getMovieTitle(), showtime.getPrice()
-                        );
-                    }
-                }
-            }
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Purchase Confirmed");
-            alert.setHeaderText(null);
-            alert.setContentText(
-                "Purchase confirmed!\n" +
-                "Showtime: " + showtime.getDateTime() + "\n" +   // NEW: date shown in receipt
-                "Total paid: PHP " + String.format("%.2f", total[0])
-            );
-            alert.showAndWait();
-            stage.setScene(new CashierDashboard(stage, cashier).getScene());
+
+            List<String> boughtSeats = new ArrayList<>(selectedLabels);
+            SalesManager.getInstance().recordSale(
+                showtime.getMovieTitle(), total[0],
+                cashier.getFullName(), boughtSeats);
+
+            // Receipt dialog
+            showReceipt(boughtSeats, total[0]);
         });
 
-        backBtn.setOnAction(e -> stage.setScene(new CashierDashboard(stage, cashier).getScene()));
-
         root.setLeft(sidebar);
-        root.setCenter(content);
-        return new Scene(root, 920, 580);
+        root.setCenter(seatArea);
+        return new Scene(root, 1280, 760);
     }
 
-    // ── Style Helpers ─────────────────────────────────────────────────
+    private void showReceipt(List<String> seats, double amount) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Purchase Confirmed");
 
-    private String availStyle() {
-        return  "-fx-background-color: #2e7d4f;" +
-                "-fx-text-fill: #eaeaea;" +
-                "-fx-font-size: 10px;" +
-                "-fx-background-radius: 4;" +
-                "-fx-cursor: hand;";
+        VBox receipt = new VBox(14);
+        receipt.setPadding(new Insets(24, 28, 24, 28));
+        receipt.setPrefWidth(380);
+        receipt.setStyle("-fx-background-color:" + UIHelper.CARD + ";");
+
+        receipt.getChildren().addAll(
+            UIHelper.lbl("CINEMAX", UIHelper.RED, 22, true),
+            UIHelper.lbl("Purchase Receipt", UIHelper.TEXT, 16, true),
+            UIHelper.sep(),
+            receiptRow("Movie:",    showtime.getMovieTitle()),
+            receiptRow("Date/Time:", showtime.getDateTime()),
+            receiptRow("Room:",     showtime.getRoomName()),
+            receiptRow("Seats:",    String.join(", ", seats)),
+            receiptRow("Qty:",      seats.size() + " seat" + (seats.size() != 1 ? "s" : "")),
+            receiptRow("Price/Seat:", String.format("PHP %.2f", showtime.getPrice())),
+            UIHelper.sep(),
+            receiptRow("TOTAL:",    String.format("PHP %.2f", amount)),
+            UIHelper.sep(),
+            UIHelper.lbl("Served by: " + cashier.getFullName(), UIHelper.TEXT2, 12, false),
+            UIHelper.lbl("Thank you! Enjoy the show.", UIHelper.GREEN, 13, true));
+
+        dialog.getDialogPane().setContent(receipt);
+        dialog.getDialogPane().setStyle("-fx-background-color:" + UIHelper.CARD + ";");
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
+        dialog.showAndWait();
+
+        stage.setScene(new CashierDashboard(stage, cashier).getScene());
     }
 
-    private String takenStyle() {
-        return  "-fx-background-color: #7a2020;" +
-                "-fx-text-fill: #3d4560;" +
-                "-fx-font-size: 10px;" +
-                "-fx-background-radius: 4;";
+    private HBox receiptRow(String key, String value) {
+        HBox row = new HBox();
+        Label k = UIHelper.lbl(key,   UIHelper.TEXT2, 12, false); k.setPrefWidth(110);
+        Label v = UIHelper.lbl(value, UIHelper.TEXT,  12, true);
+        v.setWrapText(true);
+        HBox.setHgrow(v, Priority.ALWAYS);
+        row.getChildren().addAll(k, v);
+        return row;
     }
 
-    private String selectedStyle() {
-        return  "-fx-background-color: #c9a84c;" +
-                "-fx-text-fill: #0b0f1a;" +
-                "-fx-font-size: 10px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 4;" +
-                "-fx-cursor: hand;";
-    }
-
-    private HBox legendItem(String color, String label) {
+    private HBox legendRow(String bg, String border, String label) {
         Rectangle box = new Rectangle(14, 14);
-        box.setFill(Color.web(color));
-        box.setArcWidth(4); box.setArcHeight(4);
-        Label lbl = new Label(label);
-        lbl.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 11px;");
+        box.setFill(Color.web(bg));
+        box.setStroke(Color.web(border));
+        box.setStrokeWidth(1.5);
+        box.setArcWidth(3);
+        box.setArcHeight(3);
+        Label lbl = UIHelper.lbl(label, UIHelper.TEXT2, 12, false);
         HBox row = new HBox(8, box, lbl);
         row.setAlignment(Pos.CENTER_LEFT);
         return row;
+    }
+
+    private String freeStyle() {
+        return "-fx-background-color:" + UIHelper.SEAT_FREE +
+                ";-fx-text-fill:#aaaaaa;-fx-font-size:10;" +
+                "-fx-background-radius:4;-fx-border-color:" + UIHelper.SEAT_FREE_B +
+                ";-fx-border-radius:4;-fx-border-width:1;-fx-cursor:hand;";
+    }
+
+    private String takenStyle() {
+        return "-fx-background-color:" + UIHelper.SEAT_TAKEN +
+                ";-fx-text-fill:#555555;-fx-font-size:10;" +
+                "-fx-background-radius:4;-fx-border-color:" + UIHelper.SEAT_TAKEN_B +
+                ";-fx-border-radius:4;-fx-border-width:1;";
+    }
+
+    private String selectedStyle() {
+        return "-fx-background-color:" + UIHelper.SEAT_SEL +
+                ";-fx-text-fill:#ffffff;-fx-font-size:10;-fx-font-weight:bold;" +
+                "-fx-background-radius:4;-fx-border-color:" + UIHelper.SEAT_SEL_B +
+                ";-fx-border-radius:4;-fx-border-width:1.5;-fx-cursor:hand;";
     }
 }

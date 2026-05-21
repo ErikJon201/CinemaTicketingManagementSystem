@@ -3,12 +3,12 @@ package views;
 import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.*;
-import javafx.scene.shape.*;
 import javafx.stage.Stage;
 import models.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class MovieSelectionScreen {
     private Stage stage;
@@ -20,194 +20,158 @@ public class MovieSelectionScreen {
     }
 
     public Scene getScene() {
-
-        // ── Root ─────────────────────────────────────────────────────
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #0b0f1a;");
+        root.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        // ── Sidebar ───────────────────────────────────────────────────
-        VBox sidebar = new VBox(0);
-        sidebar.setPrefWidth(200);
-        sidebar.setStyle("-fx-background-color: #161b2e;");
+        String[] navLabels = {"Dashboard", "Now Showing", "Sell Tickets"};
+        Runnable[] navActs = {
+            () -> stage.setScene(new CashierDashboard(stage, cashier).getScene()),
+            () -> stage.setScene(new SearchMovieScreen(stage, cashier).getScene()),
+            null
+        };
+        root.setLeft(UIHelper.sidebar(cashier, "Sell Tickets", navLabels, navActs,
+                () -> stage.setScene(new LoginScreen(stage).getScene())));
 
-        Rectangle accentBar = new Rectangle(4, 500);
-        accentBar.setFill(Color.web("#c9a84c"));
+        ScrollPane scroll = new ScrollPane();
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background:transparent;-fx-background-color:transparent;");
 
-        VBox brandBox = new VBox(4);
-        brandBox.setPadding(new Insets(30, 20, 30, 20));
-        brandBox.setStyle("-fx-border-color: transparent transparent #2b3250 transparent; -fx-border-width: 1;");
-        Label brand = new Label("🎬  CINETICKET");
-        brand.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 13px; -fx-font-weight: bold;");
-        Label portalTag = new Label("CASHIER PORTAL");
-        portalTag.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
-        brandBox.getChildren().addAll(brand, portalTag);
-
-        Button backBtn = navButton("← Back to Dashboard");
-        backBtn.setOnAction(e -> stage.setScene(new CashierDashboard(stage, cashier).getScene()));
-
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-        Label footer = new Label("Select a movie\nto begin booking");
-        footer.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 11px;");
-        footer.setPadding(new Insets(0, 20, 24, 24));
-
-        sidebar.getChildren().addAll(
-                new HBox(accentBar, brandBox) {
-                    {
-                        setAlignment(Pos.CENTER_LEFT);
-                    }
-                },
-                backBtn, spacer, footer);
-
-        // ── Main Content ─────────────────────────────────────────────
         VBox content = new VBox(24);
-        content.setPadding(new Insets(40, 40, 40, 40));
+        content.setPadding(new Insets(44, 48, 44, 48));
+        content.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        Label nowShowing = new Label("Now Showing");
-        nowShowing.setStyle(
-                "-fx-text-fill: #eaeaea;" +
-                        "-fx-font-size: 22px;" +
-                        "-fx-font-weight: bold;");
+        content.getChildren().add(UIHelper.pageHeader("Select Showtime",
+                "Choose a showtime to begin selling tickets."));
 
-        Label sub = new Label("Click a movie to select seats");
-        sub.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 12px;");
+        // Genre filter
+        Label filterLabel = UIHelper.sectionLbl("Filter by Genre");
+        VBox.setMargin(filterLabel, new Insets(4, 0, 4, 0));
 
-        Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #2b3250;");
+        HBox filterRow = new HBox(8);
+        filterRow.setAlignment(Pos.CENTER_LEFT);
+        String[] genres = {"All", "Action", "Sci-Fi", "Thriller", "Horror",
+                           "Animation", "Romance", "Comedy"};
+        String[] selectedGenre = {"All"};
 
-        // ── Movie Cards Row ───────────────────────────────────────────
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setFitToHeight(true);
+        VBox showtimeGrid = new VBox(10);
 
-        GridPane cardsRow = new GridPane();
-        cardsRow.setHgap(10);
-        cardsRow.setVgap(16);
-        cardsRow.setPadding(new Insets(10, 4, 10, 4));
+        Runnable refreshGrid = () -> {
+            showtimeGrid.getChildren().clear();
+            List<Showtime> shows = CinemaManager.getInstance().getShowtimes().stream()
+                .filter(s -> selectedGenre[0].equals("All") ||
+                             s.getMovieGenre().equalsIgnoreCase(selectedGenre[0]))
+                .collect(Collectors.toList());
 
-        int[] cardIndex = { 0 };
-
-        for (Showtime st : CinemaManager.getInstance().getShowtimes()) {
-            Movie movie = st.getMovie();
-
-            VBox card = new VBox(0);
-            card.setPrefWidth(240);
-            card.setStyle(
-                    "-fx-background-color: #161b2e;" +
-                            "-fx-background-radius: 6;" +
-                            "-fx-cursor: hand;" +
-                            "-fx-effect: dropshadow(gaussian,rgba(0,0,0,0.5),12,0,0,4);");
-
-            StackPane posterBox = new StackPane();
-            posterBox.setPrefHeight(300);
-            posterBox.setStyle(
-                    "-fx-background-color: #2b3250;" +
-                            "-fx-background-radius: 6 6 0 0;");
-
-            try {
-                String imageName = movie.getTitle().toLowerCase()
-                        .replace(" ", "_").replace(":", "") + ".jpg";
-                Image img = new Image(
-                        getClass().getResourceAsStream("/images/" + imageName),
-                        240, 300, false, true);
-                ImageView iv = new ImageView(img);
-                iv.setFitWidth(240);
-                iv.setFitHeight(300);
-                iv.setPreserveRatio(false);
-
-                Rectangle clip = new Rectangle(240, 300);
-                clip.setArcWidth(12);
-                clip.setArcHeight(12);
-                iv.setClip(clip);
-                posterBox.getChildren().add(iv);
-
-            } catch (Exception ex) {
-                Label placeholder = new Label("🎬");
-                placeholder.setStyle("-fx-font-size: 40px;");
-                posterBox.getChildren().add(placeholder);
+            if (shows.isEmpty()) {
+                showtimeGrid.getChildren().add(
+                    UIHelper.lbl("No showtimes match the selected genre.", UIHelper.TEXT2, 13, false));
+                return;
             }
 
-            VBox info = new VBox(4);
-            info.setPadding(new Insets(12, 12, 14, 12));
+            // Header
+            HBox hdr = buildHeader();
+            showtimeGrid.getChildren().addAll(hdr, UIHelper.sep());
 
-            Label titleLbl = new Label(movie.getTitle());
-            titleLbl.setStyle(
-                    "-fx-text-fill: #eaeaea;" +
-                            "-fx-font-size: 13px;" +
-                            "-fx-font-weight: bold;");
-            titleLbl.setWrapText(true);
+            for (Showtime st : shows) {
+                showtimeGrid.getChildren().add(buildShowtimeRow(st));
+            }
+        };
 
-            Label genreDuration = new Label(
-                    movie.getGenre() + "  •  " + movie.getDuration() + " min");
-            genreDuration.setStyle(
-                    "-fx-text-fill: #7a849a;" +
-                            "-fx-font-size: 11px;");
-
-            Label dateTimeLbl = new Label("📅 " + st.getDateTime());
-            dateTimeLbl.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 11px;");
-            dateTimeLbl.setWrapText(true);
-
-            Label priceLbl = new Label("PHP " + st.getPrice());
-            priceLbl.setStyle(
-                    "-fx-text-fill: #3d4560;" +
-                            "-fx-font-size: 11px;");
-
-            Label roomLbl = new Label("🎭 " + st.getRoomName());
-            roomLbl.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 11px;");
-
-            info.getChildren().addAll(titleLbl, genreDuration, roomLbl, dateTimeLbl, priceLbl);
-            card.getChildren().addAll(posterBox, info);
-
-            card.setOnMouseEntered(ev -> card.setStyle(
-                    "-fx-background-color: #1e2540;" +
-                            "-fx-background-radius: 6;" +
-                            "-fx-cursor: hand;" +
-                            "-fx-effect: dropshadow(gaussian,rgba(0,0,0,0.7),20,0,0,8);"));
-            card.setOnMouseExited(ev -> card.setStyle(
-                    "-fx-background-color: #161b2e;" +
-                            "-fx-background-radius: 6;" +
-                            "-fx-cursor: hand;" +
-                            "-fx-effect: dropshadow(gaussian,rgba(0,0,0,0.5),12,0,0,4);"));
-            card.setOnMouseClicked(ev -> stage.setScene(new SeatSelectionScreen(stage, cashier, st).getScene()));
-
-            int col = cardIndex[0] % 10;
-            int row = cardIndex[0] / 10;
-            cardsRow.add(card, col, row);
-            cardIndex[0]++;
+        for (String genre : genres) {
+            Button chip = buildChip(genre, genre.equals("All"));
+            chip.setOnAction(e -> {
+                selectedGenre[0] = genre;
+                filterRow.getChildren().forEach(n -> {
+                    if (n instanceof Button b) {
+                        boolean active = b.getText().equals(genre);
+                        b.setStyle(chipStyle(active));
+                    }
+                });
+                refreshGrid.run();
+            });
+            filterRow.getChildren().add(chip);
         }
 
-        scrollPane.setContent(cardsRow);
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        refreshGrid.run();
 
-        content.getChildren().addAll(nowShowing, sub, sep, scrollPane);
+        VBox gridCard = UIHelper.card();
+        gridCard.getChildren().add(showtimeGrid);
 
-        root.setLeft(sidebar);
-        root.setCenter(content);
-        return new Scene(root, 860, 520);
+        content.getChildren().addAll(filterLabel, filterRow, gridCard);
+        scroll.setContent(content);
+        root.setCenter(scroll);
+        return new Scene(root, 1280, 760);
     }
 
-    private Button navButton(String text) {
-        Button btn = new Button(text);
-        btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setAlignment(Pos.CENTER_LEFT);
-        btn.setPadding(new Insets(14, 24, 14, 24));
-        btn.setStyle(
-                "-fx-background-color: transparent;" +
-                        "-fx-text-fill: #7a849a;" +
-                        "-fx-font-size: 13px;" +
-                        "-fx-cursor: hand;");
-        btn.setOnMouseEntered(e -> btn.setStyle(
-                "-fx-background-color: #1e2540;" +
-                        "-fx-text-fill: #c9a84c;" +
-                        "-fx-font-size: 13px;" +
-                        "-fx-cursor: hand;"));
-        btn.setOnMouseExited(e -> btn.setStyle(
-                "-fx-background-color: transparent;" +
-                        "-fx-text-fill: #7a849a;" +
-                        "-fx-font-size: 13px;" +
-                        "-fx-cursor: hand;"));
-        return btn;
+    private HBox buildHeader() {
+        HBox row = new HBox(0);
+        row.setPadding(new Insets(6, 8, 6, 8));
+        Label m = UIHelper.lbl("MOVIE", UIHelper.MUTED, 11, true); m.setPrefWidth(260);
+        Label g = UIHelper.lbl("GENRE", UIHelper.MUTED, 11, true); g.setPrefWidth(100);
+        Label d = UIHelper.lbl("DATE", UIHelper.MUTED, 11, true);  d.setPrefWidth(130);
+        Label t = UIHelper.lbl("TIME", UIHelper.MUTED, 11, true);  t.setPrefWidth(100);
+        Label r = UIHelper.lbl("ROOM", UIHelper.MUTED, 11, true);  r.setPrefWidth(130);
+        Label a = UIHelper.lbl("AVAILABLE", UIHelper.MUTED, 11, true); a.setPrefWidth(100);
+        Label p = UIHelper.lbl("PRICE", UIHelper.MUTED, 11, true); p.setPrefWidth(90);
+        row.getChildren().addAll(m, g, d, t, r, a, p);
+        return row;
+    }
+
+    private HBox buildShowtimeRow(Showtime st) {
+        HBox row = new HBox(0);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(11, 8, 11, 8));
+        row.setStyle("-fx-background-color:transparent;-fx-background-radius:8;");
+        row.setOnMouseEntered(e ->
+            row.setStyle("-fx-background-color:" + UIHelper.CARD2 + ";-fx-background-radius:8;"));
+        row.setOnMouseExited(e ->
+            row.setStyle("-fx-background-color:transparent;-fx-background-radius:8;"));
+
+        Label m = UIHelper.lbl(st.getMovieTitle(), UIHelper.TEXT, 13, true);  m.setPrefWidth(260);
+        Label g = UIHelper.lbl(st.getMovieGenre(), UIHelper.TEXT2, 12, false); g.setPrefWidth(100);
+        Label d = UIHelper.lbl(st.getDate(),       UIHelper.TEXT2, 12, false); d.setPrefWidth(130);
+        Label t = UIHelper.lbl(st.getTime(),       UIHelper.TEXT,  13, false); t.setPrefWidth(100);
+        Label r = UIHelper.lbl(st.getRoomName(),   UIHelper.TEXT2, 12, false); r.setPrefWidth(130);
+
+        int avail = st.getAvailableSeats();
+        String aColor = avail == 0 ? "#e74c3c" : avail < 10 ? UIHelper.GOLD : UIHelper.GREEN;
+        Label a = UIHelper.lbl(avail + " seats", aColor, 12, false); a.setPrefWidth(100);
+
+        Label p = UIHelper.lbl(String.format("PHP %.0f", st.getPrice()), UIHelper.TEXT, 13, false);
+        p.setPrefWidth(90);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button buyBtn = UIHelper.primaryBtn("Select");
+        buyBtn.setPrefHeight(32);
+
+        if (avail == 0) {
+            buyBtn.setText("Sold Out");
+            buyBtn.setDisable(true);
+        } else {
+            buyBtn.setOnAction(e ->
+                stage.setScene(new SeatSelectionScreen(stage, cashier, st).getScene()));
+        }
+
+        row.getChildren().addAll(m, g, d, t, r, a, p, spacer, buyBtn);
+        return row;
+    }
+
+    private Button buildChip(String label, boolean active) {
+        Button b = new Button(label);
+        b.setStyle(chipStyle(active));
+        return b;
+    }
+
+    private String chipStyle(boolean active) {
+        return active
+            ? "-fx-background-color:" + UIHelper.RED + ";-fx-text-fill:#fff;" +
+              "-fx-font-size:12;-fx-font-weight:bold;-fx-background-radius:20;" +
+              "-fx-cursor:hand;-fx-padding:6 14;"
+            : "-fx-background-color:" + UIHelper.CARD2 + ";-fx-text-fill:" + UIHelper.TEXT2 +
+              ";-fx-font-size:12;-fx-background-radius:20;-fx-cursor:hand;-fx-padding:6 14;" +
+              "-fx-border-color:" + UIHelper.BORDER + ";-fx-border-radius:20;-fx-border-width:1;";
     }
 }

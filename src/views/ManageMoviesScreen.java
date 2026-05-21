@@ -1,24 +1,18 @@
 package views;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.paint.*;
-import javafx.scene.shape.*;
 import javafx.stage.Stage;
-import models.Admin;
-import models.CinemaManager;
-import models.Movie;
-import models.Showtime;
-import models.TheaterRoom;
+import models.*;
 
 public class ManageMoviesScreen {
-
     private Stage stage;
     private Admin admin;
-    private TableView<Movie> table;
 
     public ManageMoviesScreen(Stage stage, Admin admin) {
         this.stage = stage;
@@ -26,273 +20,280 @@ public class ManageMoviesScreen {
     }
 
     public Scene getScene() {
-
-        // ── Root ─────────────────────────────────────────────────────
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #0b0f1a;");
+        root.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        // ── Sidebar ───────────────────────────────────────────────────
-        BorderPane sidebar = new BorderPane();
-        sidebar.setPrefWidth(220);
-        sidebar.setStyle("-fx-background-color: #161b2e;");
+        // ── Sidebar ────────────────────────────────────────────────────────────
+        String[] nav = {"Dashboard", "Movies", "Showtimes", "Theater Rooms", "Staff", "Sales Report"};
+        Runnable[] acts = {
+            () -> stage.setScene(new AdminDashboard(stage, admin).getScene()),
+            null,
+            () -> stage.setScene(new ManageShowtimesScreen(stage, admin).getScene()),
+            () -> stage.setScene(new ManageRoomsScreen(stage, admin).getScene()),
+            () -> stage.setScene(new ManageUsersScreen(stage, admin).getScene()),
+            () -> stage.setScene(new SalesReportScreen(stage, admin).getScene())
+        };
+        root.setLeft(UIHelper.sidebar(admin, "Movies", nav, acts,
+                () -> stage.setScene(new LoginScreen(stage).getScene())));
 
-        Rectangle accentBar = new Rectangle(4, 700);
-        accentBar.setFill(Color.web("#c9a84c"));
+        // ── Main content ───────────────────────────────────────────────────────
+        HBox main = new HBox(20);
+        main.setPadding(new Insets(36, 36, 36, 36));
+        main.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        VBox brandBox = new VBox(4);
-        brandBox.setPadding(new Insets(30, 20, 30, 20));
-        brandBox.setStyle("-fx-border-color: transparent transparent #2b3250 transparent; -fx-border-width: 1;");
-        Label brand = new Label("🎬  CINETICKET");
-        brand.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 13px; -fx-font-weight: bold;");
-        Label portalTag = new Label("MANAGE MOVIES");
-        portalTag.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
-        brandBox.getChildren().addAll(brand, portalTag);
+        // ── Left: table ────────────────────────────────────────────────────────
+        VBox leftPane = new VBox(16);
+        HBox.setHgrow(leftPane, Priority.ALWAYS);
 
-        VBox sideTop = new VBox(0);
-        sideTop.getChildren().add(
-                new HBox(accentBar, brandBox) {
-                    {
-                        setAlignment(Pos.CENTER_LEFT);
-                    }
-                });
+        // Header row with title and History button
+        HBox headerRow = new HBox(12);
+        headerRow.setAlignment(Pos.CENTER_LEFT);
+        VBox headerText = UIHelper.pageHeader("Movie Catalog",
+                "Add, edit, or remove movies from the system.");
+        HBox.setHgrow(headerText, Priority.ALWAYS);
+        Button historyBtn = UIHelper.outlineBtn("Deleted History", UIHelper.GOLD);
+        historyBtn.setOnAction(e -> showHistoryDialog());
+        headerRow.getChildren().addAll(headerText, historyBtn);
 
-        Button backBtn = new Button("← Back to Dashboard");
-        backBtn.setMaxWidth(Double.MAX_VALUE);
-        backBtn.setPadding(new Insets(13, 0, 13, 0));
-        backBtn.setStyle(
-                "-fx-background-color: transparent;" +
-                        "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;");
-        backBtn.setOnMouseEntered(e -> backBtn.setStyle(
-                "-fx-background-color: transparent;" +
-                        "-fx-text-fill: #7a849a; -fx-font-size: 12px; -fx-cursor: hand;"));
-        backBtn.setOnMouseExited(e -> backBtn.setStyle(
-                "-fx-background-color: transparent;" +
-                        "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;"));
+        // Search bar
+        TextField searchF = UIHelper.tf("Search movies...");
+        searchF.setMaxWidth(320);
 
-        VBox sideBottom = new VBox(6);
-        sideBottom.setPadding(new Insets(0, 16, 24, 16));
-        sideBottom.getChildren().add(backBtn);
+        FilteredList<Movie> filtered =
+                new FilteredList<>(CinemaManager.getInstance().getMovies(), p -> true);
+        searchF.textProperty().addListener((obs, o, n) ->
+                filtered.setPredicate(m -> n == null || n.isEmpty() ||
+                        m.getTitle().toLowerCase().contains(n.toLowerCase()) ||
+                        m.getGenre().toLowerCase().contains(n.toLowerCase())));
 
-        sidebar.setTop(sideTop);
-        sidebar.setBottom(sideBottom);
-
-        // ── Main Content ──────────────────────────────────────────────
-        VBox content = new VBox(20);
-        content.setPadding(new Insets(40, 50, 40, 50));
-
-        Label heading = new Label("Manage Movies");
-        heading.setStyle(
-                "-fx-text-fill: #eaeaea;" +
-                        "-fx-font-size: 26px;" +
-                        "-fx-font-weight: bold;");
-        Label sub = new Label("Add, update, or remove movies from the system");
-        sub.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 13px;");
-
-        Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #2b3250;");
-
-        // ── Table ─────────────────────────────────────────────────────
-        table = new TableView<>();
-        table.setItems(CinemaManager.getInstance().getMovies());
-        table.setStyle(
-                "-fx-background-color: #0f1422;" +
-                        "-fx-border-color: #2b3250;" +
-                        "-fx-border-radius: 4;" +
-                        "-fx-background-radius: 4;" +
-                        "-fx-border-width: 1;");
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableView<Movie> table = UIHelper.table();
         VBox.setVgrow(table, Priority.ALWAYS);
 
-        TableColumn<Movie, String> nameCol = new TableColumn<>("Title");
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("title"));
+        TableColumn<Movie, Integer> idCol = UIHelper.col("#", 44);
+        idCol.setCellValueFactory(new PropertyValueFactory<>("movieId"));
 
-        TableColumn<Movie, String> genreCol = new TableColumn<>("Genre");
+        TableColumn<Movie, String> titleCol = UIHelper.col("Title", 180);
+        titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
+
+        TableColumn<Movie, String> genreCol = UIHelper.col("Genre", 100);
         genreCol.setCellValueFactory(new PropertyValueFactory<>("genre"));
 
-        TableColumn<Movie, Integer> durCol = new TableColumn<>("Duration (min)");
-        durCol.setCellValueFactory(new PropertyValueFactory<>("duration"));
+        TableColumn<Movie, String> ratingCol = UIHelper.col("Rating", 70);
+        ratingCol.setCellValueFactory(new PropertyValueFactory<>("rating"));
 
-        for (TableColumn<?, ?> col : new TableColumn[] { nameCol, genreCol, durCol }) {
-            col.setStyle("-fx-text-fill: #eaeaea; -fx-font-size: 12px;");
-        }
+        TableColumn<Movie, String> durCol = UIHelper.col("Duration", 90);
+        durCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getDurationFormatted()));
 
-        table.getColumns().addAll(nameCol, genreCol, durCol);
+        TableColumn<Movie, Integer> yearCol = UIHelper.col("Year", 60);
+        yearCol.setCellValueFactory(new PropertyValueFactory<>("releaseYear"));
 
-        // Style table rows
-        table.setRowFactory(tv -> {
-            TableRow<Movie> row = new TableRow<>();
-            row.setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
-            row.setOnMouseEntered(e -> {
-                if (!row.isEmpty())
-                    row.setStyle("-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;");
-            });
-            row.setOnMouseExited(e -> {
-                if (!row.isEmpty())
-                    row.setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
-            });
-            return row;
+        table.getColumns().addAll(idCol, titleCol, genreCol, ratingCol, durCol, yearCol);
+        table.setItems(filtered);
+
+        leftPane.getChildren().addAll(headerRow, searchF, table);
+
+        // ── Right: form ────────────────────────────────────────────────────────
+        VBox formCard = UIHelper.card();
+        formCard.setPrefWidth(320);
+        formCard.setMaxWidth(320);
+
+        Label formTitle = UIHelper.lbl("Movie Details", UIHelper.TEXT, 15, true);
+
+        TextField titleF  = UIHelper.tf("e.g. Avengers: Endgame");
+        TextField genreF  = UIHelper.tf("e.g. Action");
+        TextField durF    = UIHelper.tf("Duration in minutes (e.g. 150)");
+        TextField yearF   = UIHelper.tf("e.g. 2025");
+        ComboBox<String> ratingCb = UIHelper.cb();
+        ratingCb.getItems().addAll("G", "PG", "PG-13", "R", "NC-17");
+        ratingCb.setPromptText("Select rating");
+        TextArea descA = UIHelper.ta("Brief movie description...", 3);
+
+        Label errorLbl = UIHelper.errorLbl();
+
+        Button addBtn    = UIHelper.primaryBtn("Add Movie");
+        Button updateBtn = UIHelper.outlineBtn("Update Selected", UIHelper.GOLD);
+        Button deleteBtn = UIHelper.outlineBtn("Delete Selected", "#e74c3c");
+        Button clearBtn  = UIHelper.ghostBtn("Clear Form");
+
+        for (Button b : new Button[]{addBtn, updateBtn, deleteBtn, clearBtn})
+            b.setMaxWidth(Double.MAX_VALUE);
+
+        formCard.getChildren().addAll(
+            formTitle, UIHelper.sep(),
+            UIHelper.formRow("Title",          titleF),
+            UIHelper.formRow("Genre",          genreF),
+            UIHelper.formRow("Rating",         ratingCb),
+            UIHelper.formRow("Duration (min)", durF),
+            UIHelper.formRow("Release Year",   yearF),
+            UIHelper.formRow("Description",    descA),
+            errorLbl, UIHelper.sep(),
+            new VBox(8, addBtn, updateBtn, deleteBtn, clearBtn));
+
+        // ── Logic ──────────────────────────────────────────────────────────────
+
+        Runnable clearForm = () -> {
+            titleF.clear(); genreF.clear(); durF.clear();
+            yearF.clear(); descA.clear();
+            ratingCb.getSelectionModel().clearSelection();
+            table.getSelectionModel().clearSelection();
+            UIHelper.clearError(errorLbl);
+        };
+
+        clearBtn.setOnAction(e -> clearForm.run());
+
+        table.getSelectionModel().selectedItemProperty().addListener((obs, old, sel) -> {
+            if (sel != null) {
+                titleF.setText(sel.getTitle());
+                genreF.setText(sel.getGenre());
+                ratingCb.setValue(sel.getRating());
+                durF.setText(String.valueOf(sel.getDuration()));
+                yearF.setText(String.valueOf(sel.getReleaseYear()));
+                descA.setText(sel.getDescription());
+                UIHelper.clearError(errorLbl);
+            }
         });
-
-        // ── Form Fields ───────────────────────────────────────────────
-        Label formLabel = new Label("MOVIE DETAILS");
-        formLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 10px; -fx-font-weight: bold;");
-        TextField txtTitle = styledField("Movie Title");
-        TextField txtGenre = styledField("Genre");
-        TextField txtDuration = styledField("Duration (minutes)");
-        TextField txtTime = styledField("Time (e.g. 2:00 PM)");
-        TextField txtPrice = styledField("Price (PHP)");
-
-        HBox form = new HBox(12, txtTitle, txtGenre, txtDuration, txtTime, txtPrice);
-        HBox.setHgrow(txtTitle, Priority.ALWAYS);
-        HBox.setHgrow(txtGenre, Priority.ALWAYS);
-        HBox.setHgrow(txtDuration, Priority.ALWAYS);
-        HBox.setHgrow(txtTime, Priority.ALWAYS);
-        HBox.setHgrow(txtPrice, Priority.ALWAYS);
-
-        // ── Action Buttons ────────────────────────────────────────────
-        Button addBtn = primaryButton("＋  Add Movie");
-        Button updateBtn = secondaryButton("✎  Update Selected");
-        Button deleteBtn = dangerButton("✕  Delete Selected");
-
-        HBox actions = new HBox(12, addBtn, updateBtn, deleteBtn);
 
         addBtn.setOnAction(e -> {
-            try {
-                String title = txtTitle.getText();
-                String genre = txtGenre.getText();
-                int duration = Integer.parseInt(txtDuration.getText());
-                double price = Double.parseDouble(txtPrice.getText());
-                String time = txtTime.getText();
-
-                Movie newMovie = new Movie(title, genre, duration);
-                CinemaManager.getInstance().addMovie(newMovie);
-
-                TheaterRoom defaultRoom = CinemaManager.getInstance().getRooms().get(0);
-                Showtime defaultShowtime = new Showtime(newMovie, defaultRoom, "TBD", time, price);
-                CinemaManager.getInstance().addShowtime(defaultShowtime);
-
-                txtTitle.clear();
-                txtGenre.clear();
-                txtDuration.clear();
-                txtTime.clear();
-                txtPrice.clear();
-            } catch (NumberFormatException ex) {
-                showError("Duration and Price must be numbers!");
-            }
-        });
-
-        table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                txtTitle.setText(newSelection.getTitle());
-                txtGenre.setText(newSelection.getGenre());
-                txtDuration.setText(String.valueOf(newSelection.getDuration()));
-            }
+            if (!validateForm(titleF, genreF, ratingCb, durF, yearF, errorLbl)) return;
+            Movie m = new Movie(
+                titleF.getText().trim(),
+                genreF.getText().trim(),
+                Integer.parseInt(durF.getText().trim()),
+                ratingCb.getValue(),
+                descA.getText().trim(),
+                Integer.parseInt(yearF.getText().trim()));
+            CinemaManager.getInstance().addMovie(m);
+            clearForm.run();
         });
 
         updateBtn.setOnAction(e -> {
-            Movie selected = table.getSelectionModel().getSelectedItem();
-            if (selected != null) {
-                selected.setTitle(txtTitle.getText());
-                selected.setGenre(txtGenre.getText());
-                try {
-                    selected.setDuration(Integer.parseInt(txtDuration.getText()));
-                } catch (NumberFormatException ex) {
-                    showError("Duration must be a number!");
-                    return;
-                }
-                table.refresh();
-            }
+            Movie sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) { UIHelper.showError(errorLbl, "Select a movie to update."); return; }
+            if (!validateForm(titleF, genreF, ratingCb, durF, yearF, errorLbl)) return;
+            sel.setTitle(titleF.getText().trim());
+            sel.setGenre(genreF.getText().trim());
+            sel.setRating(ratingCb.getValue());
+            sel.setDuration(Integer.parseInt(durF.getText().trim()));
+            sel.setReleaseYear(Integer.parseInt(yearF.getText().trim()));
+            sel.setDescription(descA.getText().trim());
+            table.refresh();
+            clearForm.run();
         });
 
         deleteBtn.setOnAction(e -> {
-            Movie selected = table.getSelectionModel().getSelectedItem();
-            if (selected != null)
-                CinemaManager.getInstance().deleteMovie(selected);
+            Movie sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) { UIHelper.showError(errorLbl, "Select a movie to delete."); return; }
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+                "Delete \"" + sel.getTitle() + "\"?", ButtonType.YES, ButtonType.NO);
+            confirm.setHeaderText(null);
+            confirm.showAndWait().ifPresent(bt -> {
+                if (bt == ButtonType.YES) {
+                    CinemaManager.getInstance().deleteMovie(sel, admin.getFullName());
+                    clearForm.run();
+                }
+            });
         });
 
-        backBtn.setOnAction(e -> stage.setScene(new AdminDashboard(stage, admin).getScene()));
+        main.getChildren().addAll(leftPane, formCard);
 
-        content.getChildren().addAll(heading, sub, sep, table, formLabel, form, actions);
+        ScrollPane scroll = new ScrollPane(main);
+        scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
+        scroll.setStyle("-fx-background:transparent;-fx-background-color:transparent;");
+        root.setCenter(scroll);
 
-        root.setLeft(sidebar);
-        root.setCenter(content);
-        return new Scene(root, 900, 580);
+        return new Scene(root, 1280, 760);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────
+    // ── Deleted Movies History Dialog ──────────────────────────────────────────
 
-    private TextField styledField(String prompt) {
-        TextField tf = new TextField();
-        tf.setPromptText(prompt);
-        tf.setStyle(
-                "-fx-background-color: #0f1422;" +
-                        "-fx-text-fill: #eaeaea;" +
-                        "-fx-prompt-text-fill: #3d4560;" +
-                        "-fx-border-color: #2b3250;" +
-                        "-fx-border-radius: 4;" +
-                        "-fx-background-radius: 4;" +
-                        "-fx-border-width: 1;" +
-                        "-fx-padding: 10 12;" +
-                        "-fx-font-size: 13px;");
-        return tf;
+    private void showHistoryDialog() {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Deleted Movies History");
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(20, 24, 8, 24));
+        content.setPrefWidth(860);
+        content.setStyle("-fx-background-color:" + UIHelper.BG + ";");
+
+        content.getChildren().addAll(
+            UIHelper.lbl("Deleted Movies History", UIHelper.TEXT, 18, true),
+            UIHelper.lbl("Movies deleted from the catalog. You can restore any entry.",
+                    UIHelper.TEXT2, 13, false),
+            UIHelper.sep());
+
+        TableView<DeletedMovie> histTable = UIHelper.table();
+        histTable.setPrefHeight(400);
+        histTable.setItems(CinemaManager.getInstance().getDeletedMovies());
+
+        TableColumn<DeletedMovie, String> tCol = UIHelper.col("Title", 180);
+        tCol.setCellValueFactory(new PropertyValueFactory<>("title"));
+
+        TableColumn<DeletedMovie, String> gCol = UIHelper.col("Genre", 90);
+        gCol.setCellValueFactory(new PropertyValueFactory<>("genre"));
+
+        TableColumn<DeletedMovie, String> rCol = UIHelper.col("Rating", 70);
+        rCol.setCellValueFactory(new PropertyValueFactory<>("rating"));
+
+        TableColumn<DeletedMovie, String> dCol = UIHelper.col("Duration", 80);
+        dCol.setCellValueFactory(new PropertyValueFactory<>("durationFormatted"));
+
+        TableColumn<DeletedMovie, Integer> yCol = UIHelper.col("Year", 60);
+        yCol.setCellValueFactory(new PropertyValueFactory<>("releaseYear"));
+
+        TableColumn<DeletedMovie, String> byCol = UIHelper.col("Deleted By", 130);
+        byCol.setCellValueFactory(new PropertyValueFactory<>("deletedBy"));
+
+        TableColumn<DeletedMovie, String> atCol = UIHelper.col("Deleted At", 180);
+        atCol.setCellValueFactory(new PropertyValueFactory<>("deletedAtFormatted"));
+
+        TableColumn<DeletedMovie, Void> actionCol = new TableColumn<>("Action");
+        actionCol.setMinWidth(100);
+        actionCol.setCellFactory(col -> new TableCell<>() {
+            private final Button restoreBtn = UIHelper.outlineBtn("Restore", UIHelper.GREEN);
+            {
+                restoreBtn.setPrefHeight(28);
+                restoreBtn.setOnAction(e -> {
+                    DeletedMovie dm = getTableView().getItems().get(getIndex());
+                    CinemaManager.getInstance().restoreMovie(dm);
+                });
+            }
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : restoreBtn);
+            }
+        });
+
+        histTable.getColumns().addAll(tCol, gCol, rCol, dCol, yCol, byCol, atCol, actionCol);
+        histTable.setPlaceholder(UIHelper.lbl("No movies have been deleted yet.", UIHelper.TEXT2, 13, false));
+
+        content.getChildren().add(histTable);
+        VBox.setVgrow(histTable, Priority.ALWAYS);
+
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setStyle("-fx-background-color:" + UIHelper.BG + ";");
+        dialog.showAndWait();
     }
 
-    private Button primaryButton(String text) {
-        Button btn = new Button(text);
-        btn.setPadding(new Insets(10, 20, 10, 20));
-        btn.setStyle(
-                "-fx-background-color: #c9a84c; -fx-text-fill: #0b0f1a;" +
-                        "-fx-font-size: 12px; -fx-font-weight: bold;" +
-                        "-fx-background-radius: 4; -fx-cursor: hand;");
-        btn.setOnMouseEntered(e -> btn.setStyle(
-                "-fx-background-color: #e0bb6a; -fx-text-fill: #0b0f1a;" +
-                        "-fx-font-size: 12px; -fx-font-weight: bold;" +
-                        "-fx-background-radius: 4; -fx-cursor: hand;"));
-        btn.setOnMouseExited(e -> btn.setStyle(
-                "-fx-background-color: #c9a84c; -fx-text-fill: #0b0f1a;" +
-                        "-fx-font-size: 12px; -fx-font-weight: bold;" +
-                        "-fx-background-radius: 4; -fx-cursor: hand;"));
-        return btn;
-    }
-
-    private Button secondaryButton(String text) {
-        Button btn = new Button(text);
-        btn.setPadding(new Insets(10, 20, 10, 20));
-        btn.setStyle(
-                "-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;" +
-                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;" +
-                        "-fx-border-color: #2b3250; -fx-border-radius: 4; -fx-border-width: 1;");
-        btn.setOnMouseEntered(e -> btn.setStyle(
-                "-fx-background-color: #2b3250; -fx-text-fill: #eaeaea;" +
-                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;" +
-                        "-fx-border-color: #2b3250; -fx-border-radius: 4; -fx-border-width: 1;"));
-        btn.setOnMouseExited(e -> btn.setStyle(
-                "-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;" +
-                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;" +
-                        "-fx-border-color: #2b3250; -fx-border-radius: 4; -fx-border-width: 1;"));
-        return btn;
-    }
-
-    private Button dangerButton(String text) {
-        Button btn = new Button(text);
-        btn.setPadding(new Insets(10, 20, 10, 20));
-        btn.setStyle(
-                "-fx-background-color: #7a2020; -fx-text-fill: #eaeaea;" +
-                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;");
-        btn.setOnMouseEntered(e -> btn.setStyle(
-                "-fx-background-color: #a02828; -fx-text-fill: #eaeaea;" +
-                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"));
-        btn.setOnMouseExited(e -> btn.setStyle(
-                "-fx-background-color: #7a2020; -fx-text-fill: #eaeaea;" +
-                        "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"));
-        return btn;
-    }
-
-    private void showError(String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Input Error");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.show();
+    private boolean validateForm(TextField titleF, TextField genreF,
+                                  ComboBox<String> ratingCb, TextField durF,
+                                  TextField yearF, Label err) {
+        if (titleF.getText().trim().isEmpty()) {
+            UIHelper.showError(err, "Title is required."); return false; }
+        if (genreF.getText().trim().isEmpty()) {
+            UIHelper.showError(err, "Genre is required."); return false; }
+        if (ratingCb.getValue() == null) {
+            UIHelper.showError(err, "Rating is required."); return false; }
+        try { Integer.parseInt(durF.getText().trim()); }
+        catch (NumberFormatException ex) {
+            UIHelper.showError(err, "Duration must be a whole number."); return false; }
+        try { Integer.parseInt(yearF.getText().trim()); }
+        catch (NumberFormatException ex) {
+            UIHelper.showError(err, "Release year must be a whole number."); return false; }
+        UIHelper.clearError(err);
+        return true;
     }
 }

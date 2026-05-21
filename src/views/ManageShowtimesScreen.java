@@ -1,19 +1,18 @@
 package views;
 
+import javafx.beans.property.*;
 import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.paint.*;
-import javafx.scene.shape.*;
 import javafx.stage.Stage;
 import models.*;
+import javafx.collections.transformation.FilteredList;
 
 public class ManageShowtimesScreen {
     private Stage stage;
     private Admin admin;
-    private TableView<Showtime> table;
 
     public ManageShowtimesScreen(Stage stage, Admin admin) {
         this.stage = stage;
@@ -21,350 +20,257 @@ public class ManageShowtimesScreen {
     }
 
     public Scene getScene() {
-
-        // ── Root ─────────────────────────────────────────────────────
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #0b0f1a;");
+        root.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        // ── Sidebar ───────────────────────────────────────────────────
-        BorderPane sidebar = new BorderPane();
-        sidebar.setPrefWidth(220);
-        sidebar.setStyle("-fx-background-color: #161b2e;");
+        String[] nav = {"Dashboard", "Movies", "Showtimes", "Theater Rooms", "Staff", "Sales Report"};
+        Runnable[] acts = {
+            () -> stage.setScene(new AdminDashboard(stage, admin).getScene()),
+            () -> stage.setScene(new ManageMoviesScreen(stage, admin).getScene()),
+            null,
+            () -> stage.setScene(new ManageRoomsScreen(stage, admin).getScene()),
+            () -> stage.setScene(new ManageUsersScreen(stage, admin).getScene()),
+            () -> stage.setScene(new SalesReportScreen(stage, admin).getScene())
+        };
+        root.setLeft(UIHelper.sidebar(admin, "Showtimes", nav, acts,
+                () -> stage.setScene(new LoginScreen(stage).getScene())));
 
-        Rectangle accentBar = new Rectangle(4, 700);
-        accentBar.setFill(Color.web("#c9a84c"));
+        // ── Main ──────────────────────────────────────────────────────────────
+        HBox main = new HBox(20);
+        main.setPadding(new Insets(36, 36, 36, 36));
+        main.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        VBox brandBox = new VBox(4);
-        brandBox.setPadding(new Insets(30, 20, 30, 20));
-        brandBox.setStyle("-fx-border-color: transparent transparent #2b3250 transparent; -fx-border-width: 1;");
-        Label brand = new Label("🎬  CINETICKET");
-        brand.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 13px; -fx-font-weight: bold;");
-        Label portalTag = new Label("MANAGE SHOWTIMES");
-        portalTag.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
-        brandBox.getChildren().addAll(brand, portalTag);
+        // ── Left: table ────────────────────────────────────────────────────────
+        VBox leftPane = new VBox(16);
+        HBox.setHgrow(leftPane, Priority.ALWAYS);
 
-        VBox sideTop = new VBox(0);
-        sideTop.getChildren().add(
-            new HBox(accentBar, brandBox) {{ setAlignment(Pos.CENTER_LEFT); }}
-        );
+        HBox headerRow = new HBox(12);
+        headerRow.setAlignment(Pos.CENTER_LEFT);
+        VBox headerText = UIHelper.pageHeader("Showtime Schedule",
+                "Manage movie showtimes, rooms, dates, and pricing.");
+        HBox.setHgrow(headerText, Priority.ALWAYS);
+        Button historyBtn = UIHelper.outlineBtn("Deleted History", UIHelper.GOLD);
+        historyBtn.setOnAction(e -> showHistoryDialog());
+        headerRow.getChildren().addAll(headerText, historyBtn);
+        leftPane.getChildren().add(headerRow);
 
-        Button backBtn = new Button("← Back to Dashboard");
-        backBtn.setMaxWidth(Double.MAX_VALUE);
-        backBtn.setPadding(new Insets(13, 0, 13, 0));
-        backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;"
-        );
-        backBtn.setOnMouseEntered(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #7a849a; -fx-font-size: 12px; -fx-cursor: hand;"
-        ));
-        backBtn.setOnMouseExited(e -> backBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #3d4560; -fx-font-size: 12px; -fx-cursor: hand;"
-        ));
-
-        VBox sideBottom = new VBox(6);
-        sideBottom.setPadding(new Insets(0, 16, 24, 16));
-        sideBottom.getChildren().add(backBtn);
-
-        sidebar.setTop(sideTop);
-        sidebar.setBottom(sideBottom);
-
-        // ── Main Content ──────────────────────────────────────────────
-        VBox content = new VBox(20);
-        content.setPadding(new Insets(40, 50, 40, 50));
-
-        Label heading = new Label("Manage Showtimes");
-        heading.setStyle(
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 26px;" +
-            "-fx-font-weight: bold;"
-        );
-        Label sub = new Label("Schedule, add, or remove showtimes for movies");
-        sub.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 13px;");
-
-        Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #2b3250;");
-
-        // ── Form Fields ───────────────────────────────────────────────
-        TextField txtDate  = styledField("Date (e.g. May 16, 2026)");
-        TextField txtTime  = styledField("Time (e.g. 1:30 PM)");
-        TextField txtPrice = styledField("Price (PHP)");
-
-        // ── Table ─────────────────────────────────────────────────────
-        table = new TableView<>();
-        table.setItems(CinemaManager.getInstance().getShowtimes());
-        table.setStyle(
-            "-fx-background-color: #0f1422;" +
-            "-fx-border-color: #2b3250;" +
-            "-fx-border-radius: 4;" +
-            "-fx-background-radius: 4;" +
-            "-fx-border-width: 1;"
-        );
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableView<Showtime> table = UIHelper.table();
         VBox.setVgrow(table, Priority.ALWAYS);
 
-        TableColumn<Showtime, String> movieCol = new TableColumn<>("Movie");
+        TableColumn<Showtime, String> movieCol = UIHelper.col("Movie", 180);
         movieCol.setCellValueFactory(new PropertyValueFactory<>("movieTitle"));
 
-        TableColumn<Showtime, String> roomCol = new TableColumn<>("Room");
+        TableColumn<Showtime, String> roomCol = UIHelper.col("Room", 130);
         roomCol.setCellValueFactory(new PropertyValueFactory<>("roomName"));
 
-        TableColumn<Showtime, String> dateCol = new TableColumn<>("Date");
+        TableColumn<Showtime, String> dateCol = UIHelper.col("Date", 130);
         dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
 
-        TableColumn<Showtime, String> timeCol = new TableColumn<>("Time");
+        TableColumn<Showtime, String> timeCol = UIHelper.col("Time", 90);
         timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
 
-        TableColumn<Showtime, Double> priceCol = new TableColumn<>("Price (PHP)");
+        TableColumn<Showtime, Double> priceCol = UIHelper.col("Price", 90);
         priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
 
-        table.getColumns().addAll(movieCol, roomCol, dateCol, timeCol, priceCol);
+        TableColumn<Showtime, Integer> seatsCol = UIHelper.col("Available", 80);
+        seatsCol.setCellValueFactory(new PropertyValueFactory<>("availableSeats"));
 
-        table.setRowFactory(tv -> {
-            TableRow<Showtime> row = new TableRow<>();
-            row.setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
-            row.setOnMouseEntered(e -> {
-                if (!row.isEmpty()) row.setStyle("-fx-background-color: #1e2540; -fx-text-fill: #eaeaea;");
-            });
-            row.setOnMouseExited(e -> {
-                if (!row.isEmpty()) row.setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
-            });
-            return row;
+        TableColumn<Showtime, String> statusCol = UIHelper.col("Status", 90);
+        statusCol.setCellValueFactory(data -> {
+            int avail = data.getValue().getAvailableSeats();
+            String s = avail == 0 ? "Sold Out" : avail < 10 ? "Almost Full" : "Available";
+            return new SimpleStringProperty(s);
         });
 
-        // ── Form Label ────────────────────────────────────────────────
-        Label formLabel = new Label("SHOWTIME DETAILS");
-        formLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 10px; -fx-font-weight: bold;");
+        table.getColumns().addAll(movieCol, roomCol, dateCol, timeCol, priceCol, seatsCol, statusCol);
+        table.setItems(CinemaManager.getInstance().getShowtimes());
+        leftPane.getChildren().add(table);
 
-        // ── Movie ComboBox ────────────────────────────────────────────
-        ComboBox<Movie> movieCombo = new ComboBox<>();
-        movieCombo.setItems(CinemaManager.getInstance().getMovies());
-        movieCombo.setPromptText("Select Movie");
-        movieCombo.setMaxWidth(Double.MAX_VALUE);
-        movieCombo.setStyle(
-            "-fx-background-color: #0f1422;" +
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-prompt-text-fill: #3d4560;" +
-            "-fx-border-color: #2b3250;" +
-            "-fx-border-radius: 4;" +
-            "-fx-background-radius: 4;" +
-            "-fx-border-width: 1;" +
-            "-fx-font-size: 13px;"
-        );
-        movieCombo.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(Movie item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getTitle());
-                setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
-            }
-        });
-        movieCombo.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(Movie item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? "Select Movie" : item.getTitle());
-                setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
-            }
-        });
+        // ── Right: form ────────────────────────────────────────────────────────
+        VBox formCard = UIHelper.card();
+        formCard.setPrefWidth(320);
+        formCard.setMaxWidth(320);
 
-        // ── Room ComboBox ─────────────────────────────────────────────
-        ComboBox<TheaterRoom> roomCombo = new ComboBox<>();
-        roomCombo.setItems(CinemaManager.getInstance().getRooms());
-        roomCombo.setPromptText("Select Room");
-        roomCombo.setMaxWidth(Double.MAX_VALUE);
-        roomCombo.setStyle(
-            "-fx-background-color: #0f1422;" +
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-prompt-text-fill: #3d4560;" +
-            "-fx-border-color: #2b3250;" +
-            "-fx-border-radius: 4;" +
-            "-fx-background-radius: 4;" +
-            "-fx-border-width: 1;" +
-            "-fx-font-size: 13px;"
-        );
-        roomCombo.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(TheaterRoom item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getName());
-                setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
-            }
-        });
-        roomCombo.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(TheaterRoom item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? "Select Room" : item.getName());
-                setStyle("-fx-background-color: #0f1422; -fx-text-fill: #eaeaea;");
+        Label formTitle = UIHelper.lbl("Showtime Details", UIHelper.TEXT, 15, true);
+
+        ComboBox<Movie> movieCb = UIHelper.cb();
+        movieCb.setItems(CinemaManager.getInstance().getMovies());
+        movieCb.setPromptText("Select movie");
+
+        ComboBox<TheaterRoom> roomCb = UIHelper.cb();
+        roomCb.setItems(CinemaManager.getInstance().getRooms());
+        roomCb.setPromptText("Select room");
+
+        TextField dateF  = UIHelper.tf("e.g. May 21, 2026");
+        TextField timeF  = UIHelper.tf("e.g. 10:00 AM");
+        TextField priceF = UIHelper.tf("Price in PHP (e.g. 380)");
+
+        Label errorLbl = UIHelper.errorLbl();
+
+        Button addBtn    = UIHelper.primaryBtn("Add Showtime");
+        Button updateBtn = UIHelper.outlineBtn("Update Selected", UIHelper.GOLD);
+        Button deleteBtn = UIHelper.outlineBtn("Delete Selected", "#e74c3c");
+        Button clearBtn  = UIHelper.ghostBtn("Clear Form");
+
+        for (Button b : new Button[]{addBtn, updateBtn, deleteBtn, clearBtn})
+            b.setMaxWidth(Double.MAX_VALUE);
+
+        formCard.getChildren().addAll(
+            formTitle, UIHelper.sep(),
+            UIHelper.formRow("Movie",  movieCb),
+            UIHelper.formRow("Room",   roomCb),
+            UIHelper.formRow("Date",   dateF),
+            UIHelper.formRow("Time",   timeF),
+            UIHelper.formRow("Price (PHP)", priceF),
+            errorLbl, UIHelper.sep(),
+            new VBox(8, addBtn, updateBtn, deleteBtn, clearBtn));
+
+        // ── Logic ──────────────────────────────────────────────────────────────
+
+        Runnable clear = () -> {
+            movieCb.getSelectionModel().clearSelection();
+            roomCb.getSelectionModel().clearSelection();
+            dateF.clear(); timeF.clear(); priceF.clear();
+            table.getSelectionModel().clearSelection();
+            UIHelper.clearError(errorLbl);
+        };
+
+        clearBtn.setOnAction(e -> clear.run());
+
+        table.getSelectionModel().selectedItemProperty().addListener((obs, old, sel) -> {
+            if (sel != null) {
+                movieCb.setValue(sel.getMovie());
+                roomCb.setValue(sel.getRoom());
+                dateF.setText(sel.getDate());
+                timeF.setText(sel.getTime());
+                priceF.setText(String.valueOf(sel.getPrice()));
             }
         });
 
-        // ── Pre-fill form on row selection ────────────────────────────
-        table.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                txtDate.setText(newVal.getDate());
-                txtTime.setText(newVal.getTime());
-                txtPrice.setText(String.valueOf(newVal.getPrice()));
-                roomCombo.setValue(newVal.getRoom());
-                movieCombo.setValue(newVal.getMovie());
-            }
-        });
-
-        // ── Form Row ──────────────────────────────────────────────────
-        HBox form = new HBox(12, movieCombo, roomCombo, txtDate, txtTime, txtPrice);
-        HBox.setHgrow(movieCombo, Priority.ALWAYS);
-        HBox.setHgrow(roomCombo,  Priority.ALWAYS);
-        HBox.setHgrow(txtDate,    Priority.ALWAYS);
-        HBox.setHgrow(txtTime,    Priority.ALWAYS);
-        HBox.setHgrow(txtPrice,   Priority.ALWAYS);
-
-        // ── Action Buttons ────────────────────────────────────────────
-        Button addBtn    = primaryButton("Add Showtime");
-        Button updateBtn = primaryButton("Update Selected");
-        Button deleteBtn = dangerButton("✕  Delete Selected");
-
-        HBox actions = new HBox(12, addBtn, updateBtn, deleteBtn);
-
-        // ── Add New Showtime ──────────────────────────────────────────
         addBtn.setOnAction(e -> {
-            String date      = txtDate.getText().trim();
-            String time      = txtTime.getText().trim();
-            String priceStr  = txtPrice.getText().trim();
-            TheaterRoom room = roomCombo.getValue();
-            Movie movie      = movieCombo.getValue();
-
-            if (movie == null) { showError("Please select a Movie!"); return; }
-            if (room  == null) { showError("Please select a Theater Room!"); return; }
-            if (date.isEmpty() || time.isEmpty() || priceStr.isEmpty()) {
-                showError("Please fill in Date, Time, and Price!");
-                return;
-            }
-            try {
-                double price = Double.parseDouble(priceStr);
-                CinemaManager.getInstance().addShowtime(
-                    new Showtime(movie, room, date, time, price)
-                );
-                txtDate.clear(); txtTime.clear(); txtPrice.clear();
-                roomCombo.setValue(null); movieCombo.setValue(null);
-            } catch (NumberFormatException ex) {
-                showError("Price must be a number!");
-            }
+            if (!validateForm(movieCb, roomCb, dateF, timeF, priceF, errorLbl)) return;
+            Showtime st = new Showtime(
+                movieCb.getValue(), roomCb.getValue(),
+                dateF.getText().trim(), timeF.getText().trim(),
+                Double.parseDouble(priceF.getText().trim()));
+            CinemaManager.getInstance().addShowtime(st);
+            clear.run();
         });
 
-        // ── Update Selected Showtime ──────────────────────────────────
         updateBtn.setOnAction(e -> {
-            Showtime selected = table.getSelectionModel().getSelectedItem();
-            if (selected == null) { showError("Please select a showtime from the table first!"); return; }
-
-            String date      = txtDate.getText().trim();
-            String time      = txtTime.getText().trim();
-            String priceStr  = txtPrice.getText().trim();
-            TheaterRoom room = roomCombo.getValue();
-            Movie movie      = movieCombo.getValue();
-
-            if (movie == null) { showError("Please select a Movie!"); return; }
-            if (room  == null) { showError("Please select a Theater Room!"); return; }
-            if (date.isEmpty() || time.isEmpty() || priceStr.isEmpty()) {
-                showError("Please fill in Date, Time, and Price!");
-                return;
-            }
-            try {
-                double price = Double.parseDouble(priceStr);
-                selected.setMovie(movie);
-                selected.setRoom(room);
-                selected.setDate(date);
-                selected.setTime(time);
-                selected.setPrice(price);
-                table.refresh();
-                txtDate.clear(); txtTime.clear(); txtPrice.clear();
-                roomCombo.setValue(null); movieCombo.setValue(null);
-                table.getSelectionModel().clearSelection();
-            } catch (NumberFormatException ex) {
-                showError("Price must be a number!");
-            }
+            Showtime sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) { UIHelper.showError(errorLbl, "Select a showtime to update."); return; }
+            if (!validateForm(movieCb, roomCb, dateF, timeF, priceF, errorLbl)) return;
+            sel.setMovie(movieCb.getValue());
+            sel.setRoom(roomCb.getValue());
+            sel.setDate(dateF.getText().trim());
+            sel.setTime(timeF.getText().trim());
+            sel.setPrice(Double.parseDouble(priceF.getText().trim()));
+            table.refresh();
+            clear.run();
         });
 
-        // ── Delete Selected Showtime ──────────────────────────────────
         deleteBtn.setOnAction(e -> {
-            Showtime selected = table.getSelectionModel().getSelectedItem();
-            if (selected != null) CinemaManager.getInstance().deleteShowtime(selected);
+            Showtime sel = table.getSelectionModel().getSelectedItem();
+            if (sel == null) { UIHelper.showError(errorLbl, "Select a showtime to delete."); return; }
+            Alert a = new Alert(Alert.AlertType.CONFIRMATION,
+                "Delete showtime for \"" + sel.getMovieTitle() + "\"?",
+                ButtonType.YES, ButtonType.NO);
+            a.setHeaderText(null);
+            a.showAndWait().ifPresent(bt -> {
+                if (bt == ButtonType.YES) { CinemaManager.getInstance().deleteShowtime(sel, admin.getFullName()); clear.run(); }
+            });
         });
 
-        backBtn.setOnAction(e -> stage.setScene(new AdminDashboard(stage, admin).getScene()));
+        main.getChildren().addAll(leftPane, formCard);
 
-        content.getChildren().addAll(heading, sub, sep, table, formLabel, form, actions);
-
-        root.setLeft(sidebar);
-        root.setCenter(content);
-        return new Scene(root, 980, 580);
+        ScrollPane scroll = new ScrollPane(main);
+        scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
+        scroll.setStyle("-fx-background:transparent;-fx-background-color:transparent;");
+        root.setCenter(scroll);
+        return new Scene(root, 1280, 760);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────
+    private void showHistoryDialog() {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Deleted Showtimes History");
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 
-    private TextField styledField(String prompt) {
-        TextField tf = new TextField();
-        tf.setPromptText(prompt);
-        tf.setStyle(
-            "-fx-background-color: #0f1422;" +
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-prompt-text-fill: #3d4560;" +
-            "-fx-border-color: #2b3250;" +
-            "-fx-border-radius: 4;" +
-            "-fx-background-radius: 4;" +
-            "-fx-border-width: 1;" +
-            "-fx-padding: 10 12;" +
-            "-fx-font-size: 13px;"
-        );
-        return tf;
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(20, 24, 8, 24));
+        content.setPrefWidth(900);
+        content.setStyle("-fx-background-color:" + UIHelper.BG + ";");
+
+        content.getChildren().addAll(
+            UIHelper.lbl("Deleted Showtimes History", UIHelper.TEXT, 18, true),
+            UIHelper.lbl("Showtimes removed from the schedule. You can restore any entry.",
+                    UIHelper.TEXT2, 13, false),
+            UIHelper.sep());
+
+        TableView<DeletedShowtime> histTable = UIHelper.table();
+        histTable.setPrefHeight(400);
+        histTable.setItems(CinemaManager.getInstance().getDeletedShowtimes());
+
+        TableColumn<DeletedShowtime, String> mCol = UIHelper.col("Movie", 180);
+        mCol.setCellValueFactory(new PropertyValueFactory<>("movieTitle"));
+
+        TableColumn<DeletedShowtime, String> rCol = UIHelper.col("Room", 120);
+        rCol.setCellValueFactory(new PropertyValueFactory<>("roomName"));
+
+        TableColumn<DeletedShowtime, String> dCol = UIHelper.col("Date", 120);
+        dCol.setCellValueFactory(new PropertyValueFactory<>("date"));
+
+        TableColumn<DeletedShowtime, String> tCol = UIHelper.col("Time", 90);
+        tCol.setCellValueFactory(new PropertyValueFactory<>("time"));
+
+        TableColumn<DeletedShowtime, Double> pCol = UIHelper.col("Price", 80);
+        pCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+
+        TableColumn<DeletedShowtime, String> byCol = UIHelper.col("Deleted By", 130);
+        byCol.setCellValueFactory(new PropertyValueFactory<>("deletedBy"));
+
+        TableColumn<DeletedShowtime, String> atCol = UIHelper.col("Deleted At", 170);
+        atCol.setCellValueFactory(new PropertyValueFactory<>("deletedAtFormatted"));
+
+        TableColumn<DeletedShowtime, Void> actionCol = new TableColumn<>("Action");
+        actionCol.setMinWidth(100);
+        actionCol.setCellFactory(col -> new TableCell<>() {
+            private final Button restoreBtn = UIHelper.outlineBtn("Restore", UIHelper.GREEN);
+            {
+                restoreBtn.setPrefHeight(28);
+                restoreBtn.setOnAction(e -> {
+                    DeletedShowtime ds = getTableView().getItems().get(getIndex());
+                    CinemaManager.getInstance().restoreShowtime(ds);
+                });
+            }
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : restoreBtn);
+            }
+        });
+
+        histTable.getColumns().addAll(mCol, rCol, dCol, tCol, pCol, byCol, atCol, actionCol);
+        histTable.setPlaceholder(UIHelper.lbl("No showtimes have been deleted yet.", UIHelper.TEXT2, 13, false));
+
+        content.getChildren().add(histTable);
+        VBox.setVgrow(histTable, Priority.ALWAYS);
+
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setStyle("-fx-background-color:" + UIHelper.BG + ";");
+        dialog.showAndWait();
     }
 
-    private Button primaryButton(String text) {
-        Button btn = new Button(text);
-        btn.setPadding(new Insets(10, 20, 10, 20));
-        btn.setStyle(
-            "-fx-background-color: #c9a84c; -fx-text-fill: #0b0f1a;" +
-            "-fx-font-size: 12px; -fx-font-weight: bold;" +
-            "-fx-background-radius: 4; -fx-cursor: hand;"
-        );
-        btn.setOnMouseEntered(e -> btn.setStyle(
-            "-fx-background-color: #e0bb6a; -fx-text-fill: #0b0f1a;" +
-            "-fx-font-size: 12px; -fx-font-weight: bold;" +
-            "-fx-background-radius: 4; -fx-cursor: hand;"
-        ));
-        btn.setOnMouseExited(e -> btn.setStyle(
-            "-fx-background-color: #c9a84c; -fx-text-fill: #0b0f1a;" +
-            "-fx-font-size: 12px; -fx-font-weight: bold;" +
-            "-fx-background-radius: 4; -fx-cursor: hand;"
-        ));
-        return btn;
-    }
-
-    private Button dangerButton(String text) {
-        Button btn = new Button(text);
-        btn.setPadding(new Insets(10, 20, 10, 20));
-        btn.setStyle(
-            "-fx-background-color: #7a2020; -fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"
-        );
-        btn.setOnMouseEntered(e -> btn.setStyle(
-            "-fx-background-color: #a02828; -fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"
-        ));
-        btn.setOnMouseExited(e -> btn.setStyle(
-            "-fx-background-color: #7a2020; -fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 12px; -fx-background-radius: 4; -fx-cursor: hand;"
-        ));
-        return btn;
-    }
-
-    private void showError(String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Input Error");
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.show();
+    private boolean validateForm(ComboBox<Movie> movieCb, ComboBox<TheaterRoom> roomCb,
+                                  TextField dateF, TextField timeF, TextField priceF, Label err) {
+        if (movieCb.getValue() == null) { UIHelper.showError(err, "Select a movie."); return false; }
+        if (roomCb.getValue()  == null) { UIHelper.showError(err, "Select a room."); return false; }
+        if (dateF.getText().trim().isEmpty()) { UIHelper.showError(err, "Date is required."); return false; }
+        if (timeF.getText().trim().isEmpty()) { UIHelper.showError(err, "Time is required."); return false; }
+        try { Double.parseDouble(priceF.getText().trim()); }
+        catch (NumberFormatException ex) { UIHelper.showError(err, "Price must be a number."); return false; }
+        UIHelper.clearError(err);
+        return true;
     }
 }

@@ -1,16 +1,15 @@
 package views;
 
-import models.Admin;
 import javafx.geometry.*;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.*;
-import javafx.scene.shape.*;
 import javafx.stage.Stage;
+import models.*;
+
+import java.time.LocalTime;
 
 public class AdminDashboard {
-
     private Stage stage;
     private Admin admin;
 
@@ -20,232 +19,126 @@ public class AdminDashboard {
     }
 
     public Scene getScene() {
-
-        // ── Root ─────────────────────────────────────────────────────
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #0b0f1a;");
+        root.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
-        // ── Sidebar ──────────────────────────────────────────────────
-        VBox sidebar = new VBox(0);
-        sidebar.setPrefWidth(240);
-        sidebar.setStyle("-fx-background-color: #161b2e;");
+        // ── Sidebar ────────────────────────────────────────────────────────────
+        String[] navLabels = {"Dashboard", "Movies", "Showtimes", "Theater Rooms", "Staff", "Sales Report"};
+        Runnable[] navActions = {
+            null,
+            () -> stage.setScene(new ManageMoviesScreen(stage, admin).getScene()),
+            () -> stage.setScene(new ManageShowtimesScreen(stage, admin).getScene()),
+            () -> stage.setScene(new ManageRoomsScreen(stage, admin).getScene()),
+            () -> stage.setScene(new ManageUsersScreen(stage, admin).getScene()),
+            () -> stage.setScene(new SalesReportScreen(stage, admin).getScene())
+        };
+        VBox sidebar = UIHelper.sidebar(admin, "Dashboard", navLabels, navActions,
+                () -> stage.setScene(new LoginScreen(stage).getScene()));
+        root.setLeft(sidebar);
 
-        Rectangle accentBar = new Rectangle(4, 600);
-        accentBar.setFill(Color.web("#c9a84c"));
+        // ── Content ────────────────────────────────────────────────────────────
+        ScrollPane scroll = new ScrollPane();
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background:transparent;-fx-background-color:transparent;");
 
-        VBox brandBox = new VBox(4);
-        brandBox.setPadding(new Insets(30, 20, 30, 20));
-        brandBox.setStyle("-fx-border-color: transparent transparent #2b3250 transparent; -fx-border-width: 1;");
-        Label brand = new Label("🎬  CINETICKET");
-        brand.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 13px; -fx-font-weight: bold;");
-        Label roleTag = new Label("ADMIN PORTAL");
-        roleTag.setStyle("-fx-text-fill: #3d4560; -fx-font-size: 10px; -fx-font-weight: bold;");
-        brandBox.getChildren().addAll(brand, roleTag);
-
-        // Nav buttons
-        Button manageMoviesBtn   = navButton("🎬   Manage Movies");
-        Button manageShowtimesBtn = navButton("📅   Manage Showtimes");
-        Button manageUsersBtn    = navButton("👥   Manage Users");
-        Button salesReportBtn    = navButton("📊   Sales Report");
-
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-
-        Button logoutBtn = navButton("⎋   Logout");
-        logoutBtn.setStyle(logoutNavStyle());
-        logoutBtn.setOnMouseEntered(e -> logoutBtn.setStyle(logoutNavHoverStyle()));
-        logoutBtn.setOnMouseExited(e  -> logoutBtn.setStyle(logoutNavStyle()));
-        VBox.setMargin(logoutBtn, new Insets(0, 0, 20, 0));
-
-        sidebar.getChildren().addAll(
-            new HBox(accentBar, brandBox) {{ setAlignment(Pos.CENTER_LEFT); }},
-            manageMoviesBtn, manageShowtimesBtn, manageUsersBtn, salesReportBtn,
-            spacer, logoutBtn
-        );
-
-        // ── Main Content ──────────────────────────────────────────────
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
-
-        VBox content = new VBox(24);
-        content.setPadding(new Insets(50, 50, 50, 50));
-        content.setStyle("-fx-background-color: #0b0f1a;");
+        VBox content = new VBox(28);
+        content.setPadding(new Insets(44, 48, 44, 48));
+        content.setStyle("-fx-background-color:" + UIHelper.BG + ";");
 
         // Greeting
-        Label greeting = new Label("Welcome back,");
-        greeting.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 14px;");
+        String timeGreet = greeting();
+        VBox header = new VBox(6);
+        header.getChildren().addAll(
+            UIHelper.lbl(timeGreet + ", " + admin.getFullName() + "!", UIHelper.TEXT, 26, true),
+            UIHelper.lbl("Administrator  —  Full system access", UIHelper.TEXT2, 13, false));
 
-        Label username = new Label(admin.getFullName());
-        username.setStyle(
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 32px;" +
-            "-fx-font-weight: bold;"
-        );
+        UIHelper.sep();
 
-        Label roleInfo = new Label("Administrator  •  Full system access");
-        roleInfo.setStyle("-fx-text-fill: #c9a84c; -fx-font-size: 12px;");
+        // Stats row
+        int movieCount    = CinemaManager.getInstance().getMovies().size();
+        int showtimeCount = CinemaManager.getInstance().getShowtimes().size();
+        double todayRev   = SalesManager.getInstance().getRevenueToday();
+        int userCount     = UserManager.getInstance().getUsers().size();
 
-        Separator sep = new Separator();
-        sep.setStyle("-fx-background-color: #2b3250;");
-        VBox.setMargin(sep, new Insets(4, 0, 12, 0));
+        HBox statsRow = new HBox(16);
+        statsRow.getChildren().addAll(
+            UIHelper.statCard(String.valueOf(movieCount),    "Movies",          UIHelper.BLUE),
+            UIHelper.statCard(String.valueOf(showtimeCount), "Showtimes",       UIHelper.PURPLE),
+            UIHelper.statCard("PHP " + String.format("%.0f", todayRev), "Revenue Today", UIHelper.GREEN),
+            UIHelper.statCard(String.valueOf(userCount),     "Staff Accounts",  UIHelper.GOLD));
+        for (javafx.scene.Node n : statsRow.getChildren())
+            HBox.setHgrow(n, Priority.ALWAYS);
 
-        Label sectionLabel = new Label("MANAGEMENT TOOLS");
-        sectionLabel.setStyle(
-            "-fx-text-fill: #7a849a;" +
-            "-fx-font-size: 10px;" +
-            "-fx-font-weight: bold;"
-        );
+        // Quick nav section
+        Label secLabel = UIHelper.sectionLbl("Management");
+        VBox.setMargin(secLabel, new Insets(8, 0, 4, 0));
 
-        // Action cards
-        HBox row1 = new HBox(20);
-        HBox row2 = new HBox(20);
+        HBox cards1 = new HBox(16);
+        HBox cards2 = new HBox(16);
 
-        VBox moviesCard    = actionCard("🎬", "Manage Movies",    "Add, edit, or remove\nmovies from the system");
-        VBox showtimesCard = actionCard("📅", "Manage Showtimes", "Schedule and update\nmovie showtimes");
-        VBox usersCard     = actionCard("👥", "Manage Users",     "Add or remove cashier\nand admin accounts");
-        VBox salesCard     = actionCard("📊", "Sales Report",     "View ticket sales and\nrevenue summaries");
+        VBox c1 = actionCard("Movies",        "Add, edit, and remove movies from the catalog.",
+                UIHelper.BLUE,   () -> stage.setScene(new ManageMoviesScreen(stage, admin).getScene()));
+        VBox c2 = actionCard("Showtimes",     "Schedule and manage movie showtimes and pricing.",
+                UIHelper.PURPLE, () -> stage.setScene(new ManageShowtimesScreen(stage, admin).getScene()));
+        VBox c3 = actionCard("Theater Rooms", "Configure rooms, seating capacity, and types.",
+                UIHelper.GOLD,   () -> stage.setScene(new ManageRoomsScreen(stage, admin).getScene()));
+        VBox c4 = actionCard("Staff",         "Manage admin and cashier user accounts.",
+                UIHelper.ORANGE, () -> stage.setScene(new ManageUsersScreen(stage, admin).getScene()));
+        VBox c5 = actionCard("Sales Report",  "View revenue analytics and transaction history.",
+                UIHelper.GREEN,  () -> stage.setScene(new SalesReportScreen(stage, admin).getScene()));
 
-        row1.getChildren().addAll(moviesCard, showtimesCard);
-        row2.getChildren().addAll(usersCard, salesCard);
+        for (VBox c : new VBox[]{c1, c2, c3, c4, c5})
+            HBox.setHgrow(c, Priority.ALWAYS);
 
-        Label footer = new Label("Authorized personnel only  •  " + admin.getRole());
-        footer.setStyle("-fx-text-fill: #2b3250; -fx-font-size: 11px;");
-        Region contentSpacer = new Region();
-        VBox.setVgrow(contentSpacer, Priority.ALWAYS);
+        cards1.getChildren().addAll(c1, c2, c3);
+        cards2.getChildren().addAll(c4, c5);
 
-        content.getChildren().addAll(
-            greeting, username, roleInfo, sep,
-            sectionLabel, row1, row2,
-            contentSpacer, footer
-        );
+        content.getChildren().addAll(header, UIHelper.sep(), statsRow, secLabel, cards1, cards2);
+        scroll.setContent(content);
+        root.setCenter(scroll);
 
-        scrollPane.setContent(content);
-
-        // ── Wire up nav buttons ───────────────────────────────────────
-        manageMoviesBtn.setOnAction(e ->
-            stage.setScene(new ManageMoviesScreen(stage, admin).getScene())
-        );
-        manageShowtimesBtn.setOnAction(e ->
-            stage.setScene(new ManageShowtimesScreen(stage, admin).getScene())
-        );
-        manageUsersBtn.setOnAction(e ->
-            stage.setScene(new ManageUsersScreen(stage, admin).getScene())
-        );
-        salesReportBtn.setOnAction(e ->
-            stage.setScene(new SalesReportScreen(stage, admin).getScene())
-        );
-        logoutBtn.setOnAction(e ->
-            stage.setScene(new LoginScreen(stage).getScene())
-        );
-
-        // Wire up cards (mirror nav buttons)
-        moviesCard.setOnMouseClicked(e ->
-            stage.setScene(new ManageMoviesScreen(stage, admin).getScene())
-        );
-        showtimesCard.setOnMouseClicked(e ->
-            stage.setScene(new ManageShowtimesScreen(stage, admin).getScene())
-        );
-        usersCard.setOnMouseClicked(e ->
-            stage.setScene(new ManageUsersScreen(stage, admin).getScene())
-        );
-        salesCard.setOnMouseClicked(e ->
-            stage.setScene(new SalesReportScreen(stage, admin).getScene())
-        );
-
-        root.setLeft(sidebar);
-        root.setCenter(scrollPane);
-        return new Scene(root, 860, 520);
+        return new Scene(root, 1280, 760);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────
-
-    private Button navButton(String text) {
-        Button btn = new Button(text);
-        btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setAlignment(Pos.CENTER_LEFT);
-        btn.setPadding(new Insets(14, 24, 14, 24));
-        btn.setStyle(navStyle());
-        btn.setOnMouseEntered(e -> btn.setStyle(navHoverStyle()));
-        btn.setOnMouseExited(e  -> btn.setStyle(navStyle()));
-        return btn;
-    }
-
-    private VBox actionCard(String icon, String title, String desc) {
+    private VBox actionCard(String title, String desc, String accent, Runnable action) {
         VBox card = new VBox(10);
-        card.setPadding(new Insets(28, 28, 28, 28));
-        card.setPrefWidth(220);
-        card.setStyle(
-            "-fx-background-color: #161b2e;" +
-            "-fx-background-radius: 6;" +
-            "-fx-cursor: hand;" +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 16, 0, 0, 4);"
-        );
+        card.setPadding(new Insets(22, 22, 22, 22));
+        card.setStyle(cardStyle(false));
 
-        Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 26px;");
+        Region bar = new Region();
+        bar.setPrefHeight(3);
+        bar.setStyle("-fx-background-color:" + accent + ";-fx-background-radius:3;");
 
-        Label titleLabel = new Label(title);
-        titleLabel.setStyle(
-            "-fx-text-fill: #eaeaea;" +
-            "-fx-font-size: 15px;" +
-            "-fx-font-weight: bold;"
-        );
+        card.getChildren().addAll(
+            UIHelper.lbl(title, UIHelper.TEXT,  15, true),
+            UIHelper.lbl(desc,  UIHelper.TEXT2, 12, false),
+            bar);
 
-        Label descLabel = new Label(desc);
-        descLabel.setStyle("-fx-text-fill: #7a849a; -fx-font-size: 12px;");
-        descLabel.setWrapText(true);
+        card.getChildren().get(1).getClass(); // ensure it's a Label
+        ((Label) card.getChildren().get(1)).setWrapText(true);
 
-        Rectangle bar = new Rectangle(40, 3);
-        bar.setFill(Color.web("#c9a84c"));
-        bar.setArcWidth(2); bar.setArcHeight(2);
-        VBox.setMargin(bar, new Insets(6, 0, 0, 0));
-
-        card.getChildren().addAll(iconLabel, titleLabel, descLabel, bar);
-
-        card.setOnMouseEntered(e -> card.setStyle(
-            "-fx-background-color: #1e2540;" +
-            "-fx-background-radius: 6;" +
-            "-fx-cursor: hand;" +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 24, 0, 0, 8);"
-        ));
-        card.setOnMouseExited(e -> card.setStyle(
-            "-fx-background-color: #161b2e;" +
-            "-fx-background-radius: 6;" +
-            "-fx-cursor: hand;" +
-            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 16, 0, 0, 4);"
-        ));
-
+        card.setOnMouseEntered(e -> card.setStyle(cardStyle(true)));
+        card.setOnMouseExited(e  -> card.setStyle(cardStyle(false)));
+        card.setOnMouseClicked(e -> action.run());
+        card.setStyle(cardStyle(false) + "-fx-cursor:hand;");
+        card.setOnMouseEntered(e -> card.setStyle(cardStyle(true) + "-fx-cursor:hand;"));
+        card.setOnMouseExited(e  -> card.setStyle(cardStyle(false) + "-fx-cursor:hand;"));
         return card;
     }
 
-    private String navStyle() {
-        return  "-fx-background-color: transparent;" +
-                "-fx-text-fill: #7a849a;" +
-                "-fx-font-size: 13px;" +
-                "-fx-cursor: hand;";
+    private String cardStyle(boolean hover) {
+        return hover
+            ? "-fx-background-color:" + UIHelper.CARD2 + ";-fx-background-radius:12;" +
+              "-fx-border-color:" + UIHelper.BORDER + ";-fx-border-radius:12;-fx-border-width:1;"
+            : "-fx-background-color:" + UIHelper.CARD + ";-fx-background-radius:12;" +
+              "-fx-border-color:" + UIHelper.BORDER + ";-fx-border-radius:12;-fx-border-width:1;";
     }
 
-    private String navHoverStyle() {
-        return  "-fx-background-color: #1e2540;" +
-                "-fx-text-fill: #c9a84c;" +
-                "-fx-font-size: 13px;" +
-                "-fx-cursor: hand;";
-    }
-
-    private String logoutNavStyle() {
-        return  "-fx-background-color: transparent;" +
-                "-fx-text-fill: #3d4560;" +
-                "-fx-font-size: 13px;" +
-                "-fx-cursor: hand;";
-    }
-
-    private String logoutNavHoverStyle() {
-        return  "-fx-background-color: transparent;" +
-                "-fx-text-fill: #e05555;" +
-                "-fx-font-size: 13px;" +
-                "-fx-cursor: hand;";
+    private String greeting() {
+        int hour = LocalTime.now().getHour();
+        if (hour < 12) return "Good morning";
+        if (hour < 18) return "Good afternoon";
+        return "Good evening";
     }
 }
